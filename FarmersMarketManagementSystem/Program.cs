@@ -155,11 +155,10 @@ namespace FarmersMarketManagementSystem
         }
         static void SearchCustomer()
         {
-            Console.Write("請輸入要搜尋的客戶 ID：");
-            string? input = Console.ReadLine();
-            if (int.TryParse(input, out int searchId))
+            int? searchId = GetIntInput("請輸入客戶 ID：");
+            if (searchId != null)
             {
-                Customer? customer = FindCustomerById(searchId);
+                Customer? customer = FindCustomerById(searchId.Value);
 
                 if (customer != null)
                 {
@@ -172,9 +171,8 @@ namespace FarmersMarketManagementSystem
             }
             else
             {
-                Console.WriteLine("請輸入正確的數字！");
+                Console.Write("請輸入正確的數字!");
             }
-
             Console.WriteLine();
         }
         static void AddCustomer()
@@ -203,44 +201,40 @@ namespace FarmersMarketManagementSystem
         }
         static void UpdateCustomer()
         {
-            Console.Write("請輸入客戶 ID：");
-            string? input = Console.ReadLine();
-
-            if (int.TryParse(input, out int searchId))
+            int? searchId = GetIntInput("請輸入客戶 ID：");
+            if (searchId != null)
             {
-                Customer? customer = FindCustomerById(searchId);
-                    if (customer != null)
-                    {
-                        ShowCustomer(customer);
-                        
-                        string? newName = GetUpdateValue("客戶姓名", customer.Name);
+                Customer? customer = FindCustomerById(searchId.Value);
+                if (customer != null)
+                {
+                    ShowCustomer(customer);
 
-                        string? newPhone = GetUpdateValue("客戶電話", customer.Phone);
+                    string? newName = GetUpdateValue("客戶姓名", customer.Name);
 
-                        string? newCity = GetUpdateValue("客戶城市", customer.City);
+                    string? newPhone = GetUpdateValue("客戶電話", customer.Phone);
 
-                        UpdateCustomerInformation(customer, newName, newPhone, newCity);
+                    string? newCity = GetUpdateValue("客戶城市", customer.City);
 
-                        Console.WriteLine("客戶資料修改成功！");
-                    }
-                    else
-                    {
-                        Console.WriteLine("找不到此客戶。");
-                    }
+                    UpdateCustomerInformation(customer, newName, newPhone, newCity);
+
+                    Console.WriteLine("客戶資料修改成功！");
+                }
+                else
+                {
+                    Console.WriteLine("找不到此客戶。");
+                }
             }
             else
             {
-                Console.WriteLine("請輸入正確的數字！");
+                Console.WriteLine("請輸入正確的數字!");
             }
         }
         static void DeleteCustomer()
         {
-            Console.Write("請輸入要刪除的客戶 ID：");
-            string? deleteInput = Console.ReadLine();
-
-            if (int.TryParse(deleteInput, out int deleteId))
+            int? deleteId = GetIntInput("請輸入要刪除的客戶 ID：");
+            if (deleteId != null)
             {
-                Customer? customer = FindCustomerById(deleteId);
+                Customer? customer = FindCustomerById(deleteId.Value);
 
                 if (customer == null)
                 {
@@ -269,10 +263,9 @@ namespace FarmersMarketManagementSystem
             }
             else
             {
-                Console.WriteLine("請輸入正確的數字！");
+                Console.WriteLine("請輸入正確的數字!");
             }
-
-        }
+            }
         static Customer? FindCustomerById(int id)
         {
             foreach (Customer customer in customers)
@@ -282,7 +275,6 @@ namespace FarmersMarketManagementSystem
                     return customer;
                 }
             }
-
             return null;
         }
         static void ShowCustomer(Customer customer)
@@ -292,7 +284,7 @@ namespace FarmersMarketManagementSystem
             Console.WriteLine($"電話：{customer.Phone}");
             Console.WriteLine($"城市：{customer.City}");
         }
-        static void UpdateCustomerInformation(Customer customer,string? newName,string? newPhone,string? newCity)
+        static void UpdateCustomerInformation(Customer customer, string? newName, string? newPhone, string? newCity)
         {
             if (!string.IsNullOrWhiteSpace(newName))
             {
@@ -312,7 +304,20 @@ namespace FarmersMarketManagementSystem
             Console.Write($"請輸入新的{fieldName}（目前：{currentValue}，直接按 Enter 保留）：");
             return Console.ReadLine();
         }
-    }
+        static int? GetIntInput(string message)
+        {
+            Console.Write(message);
+            string? input = Console.ReadLine();
+            if (int.TryParse(input, out int output))
+            {
+                return output;
+            }
+            else
+            {
+                return null;
+            }
+        }
+}
 }
 
 
