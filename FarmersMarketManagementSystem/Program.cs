@@ -1,5 +1,6 @@
 ﻿using FarmersMarketManagementSystem;
 using System;
+using System.Xml.Linq;
 
 namespace FarmersMarketManagementSystem
 {
@@ -211,14 +212,12 @@ namespace FarmersMarketManagementSystem
                     if (customer != null)
                     {
                         ShowCustomer(customer);
-                        Console.Write($"請輸入新的客戶姓名（目前：{customer.Name}，直接按 Enter 保留）：");
-                        string? newName = Console.ReadLine();
+                        
+                        string? newName = GetUpdateValue("客戶姓名", customer.Name);
 
-                        Console.Write($"請輸入新的客戶電話（目前：{customer.Phone}，直接按 Enter 保留）：");
-                        string? newPhone = Console.ReadLine();
+                        string? newPhone = GetUpdateValue("客戶電話", customer.Phone);
 
-                        Console.Write($"請輸入新的客戶城市（目前：{customer.City}，直接按 Enter 保留）：");
-                        string? newCity = Console.ReadLine();
+                        string? newCity = GetUpdateValue("客戶城市", customer.City);
 
                         UpdateCustomerInformation(customer, newName, newPhone, newCity);
 
@@ -293,7 +292,7 @@ namespace FarmersMarketManagementSystem
             Console.WriteLine($"電話：{customer.Phone}");
             Console.WriteLine($"城市：{customer.City}");
         }
-        static void UpdateCustomerInformation(Customer customer,string newName,string newPhone,string newCity)
+        static void UpdateCustomerInformation(Customer customer,string? newName,string? newPhone,string? newCity)
         {
             if (!string.IsNullOrWhiteSpace(newName))
             {
@@ -307,6 +306,11 @@ namespace FarmersMarketManagementSystem
             {
                 customer.City = newCity;
             }
+        }
+        static string? GetUpdateValue(string fieldName, string currentValue)
+        {
+            Console.Write($"請輸入新的{fieldName}（目前：{currentValue}，直接按 Enter 保留）：");
+            return Console.ReadLine();
         }
     }
 }
