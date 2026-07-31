@@ -210,31 +210,17 @@ namespace FarmersMarketManagementSystem
                 Customer? customer = FindCustomerById(searchId);
                     if (customer != null)
                     {
-                        Console.WriteLine($"ID：{customer.Id}");
-                        Console.WriteLine($"姓名：{customer.Name}");
+                        ShowCustomer(customer);
                         Console.Write($"請輸入新的客戶姓名（目前：{customer.Name}，直接按 Enter 保留）：");
                         string? newName = Console.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(newName))
-                        {
-                            customer.Name = newName;
-                        }
-                        Console.WriteLine($"電話：{customer.Phone}");
                         Console.Write($"請輸入新的客戶電話（目前：{customer.Phone}，直接按 Enter 保留）：");
                         string? newPhone = Console.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(newPhone))
-                        {
-                            customer.Phone = newPhone;
-                        }
-                        Console.WriteLine($"城市：{customer.City}");
                         Console.Write($"請輸入新的客戶城市（目前：{customer.City}，直接按 Enter 保留）：");
                         string? newCity = Console.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(newCity))
-                        {
-                            customer.City = newCity;
-                        }
+                        UpdateCustomerInformation(customer, newName, newPhone, newCity);
 
                         Console.WriteLine("客戶資料修改成功！");
                     }
@@ -306,6 +292,21 @@ namespace FarmersMarketManagementSystem
             Console.WriteLine($"姓名：{customer.Name}");
             Console.WriteLine($"電話：{customer.Phone}");
             Console.WriteLine($"城市：{customer.City}");
+        }
+        static void UpdateCustomerInformation(Customer customer,string newName,string newPhone,string newCity)
+        {
+            if (!string.IsNullOrWhiteSpace(newName))
+            {
+                customer.Name = newName;
+            }
+            if (!string.IsNullOrWhiteSpace(newPhone))
+            {
+                customer.Phone = newPhone;
+            }
+            if (!string.IsNullOrWhiteSpace(newCity))
+            {
+                customer.City = newCity;
+            }
         }
     }
 }
