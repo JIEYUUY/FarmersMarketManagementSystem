@@ -1,11 +1,14 @@
 ﻿using FarmersMarketManagementSystem;
 using System;
 using System.Xml.Linq;
+using FarmersMarketManagementSystem.Models;
+using FarmersMarketManagementSystem.Services;
 
 namespace FarmersMarketManagementSystem
 {
     internal class Program
     {
+        CustomerService customerService = new CustomerService();
         static List<Customer> customers = new List<Customer>();
         static int nextCustomerId = 1;
         static void Main(string[] args)
@@ -158,7 +161,7 @@ namespace FarmersMarketManagementSystem
             int? searchId = GetIntInput("請輸入客戶 ID：");
             if (searchId != null)
             {
-                Customer? customer = FindCustomerById(searchId.Value);
+                CustomerService customer = customerService.FindCustomerById(searchId.Value);
 
                 if (customer != null)
                 {
@@ -204,7 +207,7 @@ namespace FarmersMarketManagementSystem
             int? searchId = GetIntInput("請輸入客戶 ID：");
             if (searchId != null)
             {
-                Customer? customer = FindCustomerById(searchId.Value);
+                Customer? customer = customerService.FindCustomerById(searchId.Value);
                 if (customer != null)
                 {
                     ShowCustomer(customer);
@@ -266,17 +269,7 @@ namespace FarmersMarketManagementSystem
                 Console.WriteLine("請輸入正確的數字!");
             }
             }
-        static Customer? FindCustomerById(int id)
-        {
-            foreach (Customer customer in customers)
-            {
-                if (customer.Id == id)
-                {
-                    return customer;
-                }
-            }
-            return null;
-        }
+        
         static void ShowCustomer(Customer customer)
         {
             Console.WriteLine($"ID：{customer.Id}");

@@ -1,4 +1,4 @@
-﻿namespace FarmersMarketManagementSystem
+﻿namespace FarmersMarketManagementSystem.Models
 {
     internal class Customer
     {
