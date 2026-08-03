@@ -8,7 +8,7 @@ namespace FarmersMarketManagementSystem
 {
     internal class Program
     {
-        CustomerService customerService = new CustomerService();
+        static  CustomerService customerService = new CustomerService();
         static List<Customer> customers = new List<Customer>();
         static int nextCustomerId = 1;
         static void Main(string[] args)
@@ -151,17 +151,21 @@ namespace FarmersMarketManagementSystem
         static void ShowAllCustomers()
         {
             Console.WriteLine();
-            foreach (Customer customer in customers)
+
+            List<Customer> allCustomers = customerService.GetAllCustomers();
+
+            foreach (Customer customer in allCustomers)
             {
                 ShowCustomer(customer);
             }
         }
+
         static void SearchCustomer()
         {
             int? searchId = GetIntInput("請輸入客戶 ID：");
             if (searchId != null)
             {
-                CustomerService customer = customerService.FindCustomerById(searchId.Value);
+                Customer? customer = customerService.FindCustomerById(searchId.Value);
 
                 if (customer != null)
                 {
@@ -190,11 +194,9 @@ namespace FarmersMarketManagementSystem
             Console.Write("請輸入客戶城市：");
             newCustomer.City = Console.ReadLine() ?? "";
 
-            if (!string.IsNullOrWhiteSpace(newCustomer.Name))
+            bool isAdded = customerService.AddCustomer(newCustomer);
+            if (isAdded)
             {
-                newCustomer.Id = nextCustomerId;
-                nextCustomerId++;
-                customers.Add(newCustomer);
                 Console.WriteLine("新增成功！");
             }
             else
@@ -237,7 +239,7 @@ namespace FarmersMarketManagementSystem
             int? deleteId = GetIntInput("請輸入要刪除的客戶 ID：");
             if (deleteId != null)
             {
-                Customer? customer = FindCustomerById(deleteId.Value);
+                Customer? customer = customerService.FindCustomerById(deleteId.Value);
 
                 if (customer == null)
                 {
