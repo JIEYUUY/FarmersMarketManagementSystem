@@ -1,4 +1,6 @@
-﻿using FarmersMarketManagementSystem.Models;
+﻿using System.ComponentModel.Design;
+using System.Runtime.CompilerServices;
+using FarmersMarketManagementSystem.Models;
 
 namespace FarmersMarketManagementSystem.Services
 {
@@ -12,7 +14,7 @@ namespace FarmersMarketManagementSystem.Services
             foreach (Customer customer in customers)
             {
                 if (customer.Id == id)
-                {
+                { 
                     return customer;
                 }
             }
@@ -37,6 +39,27 @@ namespace FarmersMarketManagementSystem.Services
         public List<Customer> GetAllCustomers()
         {
             return customers;
+        }
+
+        public void UpdateCustomerInformation(Customer customer, string? newName, string? newPhone, string? newCity)
+        {
+            if (!string.IsNullOrWhiteSpace(newName))
+            {
+                customer.Name = newName;
+            }
+            if (!string.IsNullOrWhiteSpace(newPhone))
+            {
+                customer.Phone = newPhone;
+            }
+            if (!string.IsNullOrWhiteSpace(newCity))
+            {
+                customer.City = newCity;
+            }
+        }
+
+        public bool DeleteCustomer(Customer customer)
+        {
+            return customers.Remove(customer);
         }
     }
 }

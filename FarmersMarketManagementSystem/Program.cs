@@ -1,6 +1,4 @@
-﻿using FarmersMarketManagementSystem;
-using System;
-using System.Xml.Linq;
+﻿using System;
 using FarmersMarketManagementSystem.Models;
 using FarmersMarketManagementSystem.Services;
 
@@ -8,9 +6,7 @@ namespace FarmersMarketManagementSystem
 {
     internal class Program
     {
-        static  CustomerService customerService = new CustomerService();
-        static List<Customer> customers = new List<Customer>();
-        static int nextCustomerId = 1;
+        static CustomerService customerService = new CustomerService();
         static void Main(string[] args)
         {
             bool isRunning = true;
@@ -220,7 +216,7 @@ namespace FarmersMarketManagementSystem
 
                     string? newCity = GetUpdateValue("客戶城市", customer.City);
 
-                    UpdateCustomerInformation(customer, newName, newPhone, newCity);
+                    customerService.UpdateCustomerInformation(customer, newName, newPhone, newCity);
 
                     Console.WriteLine("客戶資料修改成功！");
                 }
@@ -257,8 +253,14 @@ namespace FarmersMarketManagementSystem
 
                     if (confirm?.ToUpper() == "Y")
                     {
-                        customers.Remove(customer);
-                        Console.WriteLine("客戶刪除成功！");
+                        if (customerService.DeleteCustomer(customer))
+                        {
+                            Console.WriteLine("客戶刪除成功！");
+                        }
+                        else
+                        {
+                            Console.WriteLine("刪除客戶失敗。");
+                        }
                     }
                     else
                     {
@@ -270,8 +272,8 @@ namespace FarmersMarketManagementSystem
             {
                 Console.WriteLine("請輸入正確的數字!");
             }
-            }
-        
+        }
+
         static void ShowCustomer(Customer customer)
         {
             Console.WriteLine($"ID：{customer.Id}");
@@ -279,21 +281,7 @@ namespace FarmersMarketManagementSystem
             Console.WriteLine($"電話：{customer.Phone}");
             Console.WriteLine($"城市：{customer.City}");
         }
-        static void UpdateCustomerInformation(Customer customer, string? newName, string? newPhone, string? newCity)
-        {
-            if (!string.IsNullOrWhiteSpace(newName))
-            {
-                customer.Name = newName;
-            }
-            if (!string.IsNullOrWhiteSpace(newPhone))
-            {
-                customer.Phone = newPhone;
-            }
-            if (!string.IsNullOrWhiteSpace(newCity))
-            {
-                customer.City = newCity;
-            }
-        }
+
         static string? GetUpdateValue(string fieldName, string currentValue)
         {
             Console.Write($"請輸入新的{fieldName}（目前：{currentValue}，直接按 Enter 保留）：");
@@ -312,7 +300,7 @@ namespace FarmersMarketManagementSystem
                 return null;
             }
         }
-}
+    }
 }
 
 
