@@ -1,10 +1,8 @@
-﻿using System.ComponentModel.Design;
-using System.Runtime.CompilerServices;
-using FarmersMarketManagementSystem.Models;
+﻿using FarmersMarketManagementSystem.Models;
 
 namespace FarmersMarketManagementSystem.Services
 {
-    internal class CustomerService
+    internal class CustomerService : ICustomerService
     {
         private List<Customer> customers = new List<Customer>();
         private int nextCustomerId = 1;
@@ -36,6 +34,7 @@ namespace FarmersMarketManagementSystem.Services
 
             return true;
         }
+
         public List<Customer> GetAllCustomers()
         {
             return customers;

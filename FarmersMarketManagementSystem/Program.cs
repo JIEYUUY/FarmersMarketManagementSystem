@@ -6,7 +6,7 @@ namespace FarmersMarketManagementSystem
 {
     internal class Program
     {
-        static CustomerService customerService = new CustomerService();
+        static ICustomerService customerService = new CustomerService();
         static void Main(string[] args)
         {
             bool isRunning = true;
