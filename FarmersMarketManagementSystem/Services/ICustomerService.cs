@@ -5,7 +5,6 @@ namespace FarmersMarketManagementSystem.Services
     internal interface ICustomerService
     {
         Customer? FindCustomerById(int id);
-
         bool AddCustomer(Customer customer);
 
         List<Customer> GetAllCustomers();
