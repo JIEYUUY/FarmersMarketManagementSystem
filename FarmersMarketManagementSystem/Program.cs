@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Microsoft.Extensions.DependencyInjection;
 using FarmersMarketManagementSystem.Services;
 using FarmersMarketManagementSystem.UI;
 
@@ -6,10 +6,17 @@ namespace FarmersMarketManagementSystem
 {
     internal class Program
     {
-        static ICustomerService customerService = new CustomerService();
-        static CustomerMenu customerMenu = new CustomerMenu(customerService);
         static void Main(string[] args)
         {
+            ServiceCollection services = new ServiceCollection();
+
+            services.AddSingleton<ICustomerService, CustomerService>();
+            services.AddSingleton<CustomerMenu>();
+
+            ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+            CustomerMenu customerMenu = serviceProvider.GetRequiredService<CustomerMenu>();
+
             bool isRunning = true;
 
             while (isRunning)
