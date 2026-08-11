@@ -20,5 +20,18 @@
             Console.Write($"請輸入新的{fieldName}（目前：{currentValue}，直接按 Enter 保留）：");
             return Console.ReadLine();
         }
+        public static decimal? GetDecimalInput(string message)
+        {
+            Console.Write(message);
+            string? input = Console.ReadLine();
+            if (decimal.TryParse(input, out decimal output))
+            {
+                return output;
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }
