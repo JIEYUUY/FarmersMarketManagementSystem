@@ -45,8 +45,8 @@ namespace FarmersMarketManagementSystem
                         break;
 
                     case "2":
-                        Console.WriteLine();
-                        Console.WriteLine("已進入商品管理功能。");
+                        ProductMenu productMenu = serviceProvider.GetRequiredService<ProductMenu>();
+                        productMenu.ShowProductMenu();
                         break;
 
                     case "3":

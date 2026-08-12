@@ -12,6 +12,70 @@ namespace FarmersMarketManagementSystem.UI
         {
             this.productService = productService;
         }
+
+        public void ShowProductMenu()
+        {
+            bool isProductMenuRunning = true;
+            while (isProductMenuRunning)
+            {
+                Console.Clear();
+                Console.WriteLine("""
+        ====================
+         商品管理
+        ====================
+
+        1. 顯示所有商品
+        2. 搜尋商品
+        3. 新增商品
+        4. 修改商品
+        5. 刪除商品
+        0. 返回主選單
+
+        """);
+
+                Console.Write("請選擇功能：");
+                string? choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        ShowAllProducts();
+                        break;
+
+                    case "2":
+                        SearchProduct();
+                        break;
+
+                    case "3":
+                        AddProduct();
+                        break;
+
+                    case "4":
+                        UpdateProduct();
+                        break;
+
+                    case "5":
+                        DeleteProduct();
+                        break;
+
+                    case "0":
+                        isProductMenuRunning = false;
+                        break;
+
+                    default:
+                        Console.WriteLine("無效的選擇，請重新輸入。");
+                        break;
+
+                }
+            }
+            if (isProductMenuRunning)
+            {
+                Console.WriteLine();
+                Console.WriteLine("按任意鍵繼續...");
+                Console.ReadKey();
+            }
+        }
+
         public void ShowProduct(Product product)
         {
             Console.WriteLine($"ID：{product.Id}");
@@ -67,7 +131,7 @@ namespace FarmersMarketManagementSystem.UI
                 Console.WriteLine("請輸入有效的商品價格！");
                 return;
             }
-             
+
             product.Price = price.Value;
 
             if (productService.AddProduct(product))
@@ -91,10 +155,10 @@ namespace FarmersMarketManagementSystem.UI
                 {
                     Console.WriteLine("請輸入新的商品名稱（留空表示不修改）：");
                     string? name = Console.ReadLine();
-                    
+
                     Console.WriteLine("請輸入新的商品類別（留空表示不修改）：");
                     string? category = Console.ReadLine();
-                    
+
                     decimal? price = InputHelper.GetDecimalInput("請輸入新的商品價格（留空表示不修改）：");
 
                     productService.UpdateProductInformation(product, name, category, price);
@@ -123,7 +187,7 @@ namespace FarmersMarketManagementSystem.UI
                     Console.WriteLine("確定要刪除嗎？(Y/N)");
 
                     string? confirm = Console.ReadLine();
-                    if(confirm?.ToUpper() == "Y")
+                    if (confirm?.ToUpper() == "Y")
                     {
                         if (productService.DeleteProduct(product))
                         {
