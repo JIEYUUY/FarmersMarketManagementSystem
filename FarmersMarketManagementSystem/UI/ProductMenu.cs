@@ -79,5 +79,75 @@ namespace FarmersMarketManagementSystem.UI
                 Console.WriteLine("添加商品失敗！");
             }
         }
+        public void UpdateProduct()
+        {
+            int? productId = InputHelper.GetIntInput("請輸入要更新的產品ID：");
+
+            if (productId.HasValue)
+            {
+                Product? product = productService.FindProductById(productId.Value);
+
+                if (product != null)
+                {
+                    Console.WriteLine("請輸入新的商品名稱（留空表示不修改）：");
+                    string? name = Console.ReadLine();
+                    
+                    Console.WriteLine("請輸入新的商品類別（留空表示不修改）：");
+                    string? category = Console.ReadLine();
+                    
+                    decimal? price = InputHelper.GetDecimalInput("請輸入新的商品價格（留空表示不修改）：");
+
+                    productService.UpdateProductInformation(product, name, category, price);
+
+                    Console.WriteLine("商品更新成功！");
+                }
+                else
+                {
+                    Console.WriteLine("未找到該產品。");
+                }
+            }
+            else
+            {
+                Console.WriteLine("請輸入正確的數字！");
+            }
+        }
+        public void DeleteProduct()
+        {
+            int? productId = InputHelper.GetIntInput("請輸入要刪除的產品ID：");
+            if (productId.HasValue)
+            {
+                Product? product = productService.FindProductById(productId.Value);
+                if (product != null)
+                {
+                    ShowProduct(product);
+                    Console.WriteLine("確定要刪除嗎？(Y/N)");
+
+                    string? confirm = Console.ReadLine();
+                    if(confirm?.ToUpper() == "Y")
+                    {
+                        if (productService.DeleteProduct(product))
+                        {
+                            Console.WriteLine("商品刪除成功！");
+                        }
+                        else
+                        {
+                            Console.WriteLine("商品刪除失敗！");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("已取消刪除。");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("未找到該產品。");
+                }
+            }
+            else
+            {
+                Console.WriteLine("請輸入正確的數字！");
+            }
+        }
     }
 }
