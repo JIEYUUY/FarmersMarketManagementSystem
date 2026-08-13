@@ -13,9 +13,16 @@ namespace FarmersMarketManagementSystem
             services.AddSingleton<ICustomerService, CustomerService>();
             services.AddSingleton<CustomerMenu>();
 
+            services.AddSingleton<IProductService, ProductService>();
+            services.AddSingleton<ProductMenu>();
+
             ServiceProvider serviceProvider = services.BuildServiceProvider();
 
-            CustomerMenu customerMenu = serviceProvider.GetRequiredService<CustomerMenu>();
+            CustomerMenu customerMenu =
+                serviceProvider.GetRequiredService<CustomerMenu>();
+
+            ProductMenu productMenu =
+                serviceProvider.GetRequiredService<ProductMenu>();
 
             bool isRunning = true;
 
@@ -45,7 +52,6 @@ namespace FarmersMarketManagementSystem
                         break;
 
                     case "2":
-                        ProductMenu productMenu = serviceProvider.GetRequiredService<ProductMenu>();
                         productMenu.ShowProductMenu();
                         break;
 

@@ -7,12 +7,10 @@ namespace FarmersMarketManagementSystem.UI
     internal class ProductMenu
     {
         private readonly IProductService productService;
-
         public ProductMenu(IProductService productService)
         {
             this.productService = productService;
         }
-
         public void ShowProductMenu()
         {
             bool isProductMenuRunning = true;
@@ -20,18 +18,18 @@ namespace FarmersMarketManagementSystem.UI
             {
                 Console.Clear();
                 Console.WriteLine("""
-        ====================
-         商品管理
-        ====================
+                                    ====================
+                                     商品管理
+                                    ====================
 
-        1. 顯示所有商品
-        2. 搜尋商品
-        3. 新增商品
-        4. 修改商品
-        5. 刪除商品
-        0. 返回主選單
+                                    1. 顯示所有商品
+                                    2. 搜尋商品
+                                    3. 新增商品
+                                    4. 修改商品
+                                    5. 刪除商品
+                                    0. 返回主選單
 
-        """);
+                                    """);
 
                 Console.Write("請選擇功能：");
                 string? choice = Console.ReadLine();
@@ -67,12 +65,12 @@ namespace FarmersMarketManagementSystem.UI
                         break;
 
                 }
-            }
-            if (isProductMenuRunning)
-            {
-                Console.WriteLine();
-                Console.WriteLine("按任意鍵繼續...");
-                Console.ReadKey();
+                if (isProductMenuRunning)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("按任意鍵繼續...");
+                    Console.ReadKey();
+                }
             }
         }
 
@@ -86,7 +84,8 @@ namespace FarmersMarketManagementSystem.UI
         public void ShowAllProducts()
         {
             List<Product> products = productService.GetAllProducts();
-            foreach (var product in products)
+
+            foreach (Product product in products)
             {
                 ShowProduct(product);
             }
@@ -118,17 +117,17 @@ namespace FarmersMarketManagementSystem.UI
         {
             Product product = new Product();
 
-            Console.WriteLine("請輸入商品名稱：");
+            Console.Write("請輸入商品名稱：");
             product.Name = Console.ReadLine() ?? "";
 
-            Console.WriteLine("請輸入商品類別：");
+            Console.Write("請輸入商品類別：");
             product.Category = Console.ReadLine() ?? "";
 
             decimal? price = InputHelper.GetDecimalInput("請輸入商品價格：");
 
             if (!price.HasValue)
             {
-                Console.WriteLine("請輸入有效的商品價格！");
+                Console.Write("請輸入有效的商品價格！");
                 return;
             }
 
