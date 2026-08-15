@@ -6,9 +6,32 @@ namespace FarmersMarketManagementSystem.Services
     {
         private List<Vendor> vendors = new List<Vendor>();
         private int nextVendorId = 1;
-        public Vendor? FindVendorById(int id)
+        public bool AddVendor(Vendor vendor)
         {
-            foreach(Vendor vendor in vendors)
+            if (string.IsNullOrEmpty(vendor.FirstName) ||
+                string.IsNullOrEmpty(vendor.LastName))
+            {
+                return false;
+            }
+
+            foreach (Vendor existingVendor in vendors)
+            {
+                if (existingVendor.FirstName == vendor.FirstName &&
+                    existingVendor.LastName == vendor.LastName)
+                {
+                    return false;
+                }
+            }
+
+            vendor.Id = nextVendorId++;
+            vendor.IsActive = true;
+            vendors.Add(vendor);
+
+            return true;
+        }
+        public Vendor? GetVendor(int id)
+        {
+            foreach (Vendor vendor in vendors)
             {
                 if (vendor.Id == id)
                 {
@@ -17,4 +40,57 @@ namespace FarmersMarketManagementSystem.Services
             }
             return null;
         }
+        public bool UpdateVendor(int id, string firstName, string lastName)
+        {
+            Vendor? vendor = GetVendor(id);
+
+            if (vendor != null &&
+                !string.IsNullOrEmpty(firstName) &&
+                !string.IsNullOrEmpty(lastName))
+            {
+                vendor.FirstName = firstName;
+                vendor.LastName = lastName;
+
+                return true;
+            }
+
+            return false;
+        }
+        public bool DeactivateVendor(int id)
+        {
+            Vendor? vendor = GetVendor(id);
+
+            if (vendor == null)
+            {
+                return false;
+            }
+
+            vendor.IsActive = false;
+            return true;
+        }
+        public List<Vendor> GetActiveVendors()
+        {
+            List<Vendor> activeVendors = new List<Vendor>();
+            foreach (Vendor vendor in vendors)
+            {
+                if (vendor.IsActive)
+                {
+                    activeVendors.Add(vendor);
+                }
+            }
+            return activeVendors;
+        }
+        public bool ActivateVendor(int id)
+        {
+            Vendor? vendor = GetVendor(id);
+
+            if (vendor == null)
+            {
+                return false;
+            }
+
+            vendor.IsActive = true;
+            return true;
+        }
     }
+}

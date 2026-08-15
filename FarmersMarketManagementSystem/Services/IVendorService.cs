@@ -7,21 +7,16 @@ namespace FarmersMarketManagementSystem.Services
 {
     internal interface IVendorService
     {
-        Vendor? FindVendorById(int id);
-
         bool AddVendor(Vendor vendor);
 
-        List<Vendor> GetAllVendors();
+        Vendor? GetVendor(int id);
 
-        void UpdateVendorInformation(
-            Vendor vendor,
-            string? firstName,
-            string? lastName,
-            string? phone,
-            string? boothNumber);
+        List<Vendor> GetActiveVendors();
 
-        bool DeactivateVendor(Vendor vendor);
+        bool UpdateVendor(int id, string firstName, string lastName);
 
-        bool ActivateVendor(Vendor vendor);
+        bool DeactivateVendor(int id);
+
+        bool ActivateVendor(int id);
     }
 }
