@@ -17,7 +17,7 @@ namespace FarmersMarketManagementSystem.UI
         {
             Console.WriteLine($"ID：{vendor.Id}");
             Console.WriteLine($"姓名：{vendor.FirstName} {vendor.LastName}");
-            Console.WriteLine($"狀態：{(vendor.IsActive ? "啟用" : "停用")}");
+            Console.WriteLine($"狀態：{vendor.Status}");
             Console.WriteLine();
         }
 
@@ -50,8 +50,7 @@ namespace FarmersMarketManagementSystem.UI
         2. 搜尋攤商
         3. 新增攤商
         4. 修改攤商
-        5. 停用攤商
-        6. 啟用攤商
+        5. 更新攤商狀態
         0. 返回主選單
 
         """);
@@ -78,11 +77,7 @@ namespace FarmersMarketManagementSystem.UI
                         break;
 
                     case "5":
-                        DeactivateVendor();
-                        break;
-
-                    case "6":
-                        ActivateVendor();
+                        UpdateVendorStatus();
                         break;
 
                     case "0":
@@ -91,7 +86,7 @@ namespace FarmersMarketManagementSystem.UI
 
                     default:
                         Console.WriteLine();
-                        Console.WriteLine("輸入錯誤，請輸入 0～6。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～5。");
                         break;
                 }
 
@@ -191,18 +186,18 @@ namespace FarmersMarketManagementSystem.UI
             }
         }
 
-        public void DeactivateVendor()
+        public void UpdateVendorStatus()
         {
-            int? deleteId =
-                InputHelper.GetIntInput("請輸入要停用的攤商 ID：");
+            int? vendorId =
+                InputHelper.GetIntInput("請輸入要更新狀態的攤商 ID：");
 
-            if (deleteId == null)
+            if (vendorId == null)
             {
                 Console.WriteLine("請輸入正確的數字!");
                 return;
             }
 
-            Vendor? vendor = vendorService.GetVendor(deleteId.Value);
+            Vendor? vendor = vendorService.GetVendor(vendorId.Value);
 
             if (vendor == null)
             {
@@ -214,65 +209,30 @@ namespace FarmersMarketManagementSystem.UI
             Console.WriteLine("找到攤商：");
             ShowVendor(vendor);
 
-            Console.Write("確定要停用嗎？(Y/N)：");
-            string? confirm = Console.ReadLine();
+            Console.Write("請輸入要更新的狀態：(1.Pending 2.Active 3.Suspended 4.Banned)：");
+            string? statusInput = Console.ReadLine();
 
-            if (confirm?.ToUpper() == "Y")
+            if (!int.TryParse(statusInput, out int statusValue))
             {
-                if (vendorService.DeactivateVendor(vendor.Id))
-                {
-                    Console.WriteLine("攤商停用成功！");
-                }
-                else
-                {
-                    Console.WriteLine("停用攤商失敗。");
-                }
-            }
-            else
-            {
-                Console.WriteLine("已取消停用。");
-            }
-        }
-        public void ActivateVendor()
-        {
-            int? deleteId =
-                InputHelper.GetIntInput("請輸入要啟用的攤商 ID：");
-
-            if (deleteId == null)
-            {
-                Console.WriteLine("請輸入正確的數字!");
+                Console.WriteLine("請輸入有效的狀態代碼。");
                 return;
             }
 
-            Vendor? vendor = vendorService.GetVendor(deleteId.Value);
-
-            if (vendor == null)
+            if (!Enum.IsDefined(typeof(VendorStatus), statusValue))
             {
-                Console.WriteLine("找不到此攤商。");
+                Console.WriteLine("請輸入 1～4 的有效狀態代碼。");
                 return;
             }
 
-            Console.WriteLine();
-            Console.WriteLine("找到攤商：");
-            ShowVendor(vendor);
+            VendorStatus newStatus = (VendorStatus)statusValue;
 
-            Console.Write("確定要啟用嗎？(Y/N)：");
-            string? confirm = Console.ReadLine();
-
-            if (confirm?.ToUpper() == "Y")
+            if (vendorService.UpdateVendorStatus(vendor.Id, newStatus))
             {
-                if (vendorService.ActivateVendor(vendor.Id))
-                {
-                    Console.WriteLine("攤商啟用成功！");
-                }
-                else
-                {
-                    Console.WriteLine("啟用攤商失敗。");
-                }
+                Console.WriteLine("攤商狀態更新成功！");
             }
             else
             {
-                Console.WriteLine("已取消啟用。");
+                Console.WriteLine("更新攤商狀態失敗。");
             }
         }
     }

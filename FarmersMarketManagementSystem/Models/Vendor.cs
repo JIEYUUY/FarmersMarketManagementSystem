@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FarmersMarketManagementSystem.Models
+﻿namespace FarmersMarketManagementSystem.Models
 {
     internal class Vendor
     {
@@ -16,6 +12,6 @@ namespace FarmersMarketManagementSystem.Models
 
         public string BoothNumber = "";
 
-        public bool IsActive;
+        public VendorStatus Status;
     }
 }

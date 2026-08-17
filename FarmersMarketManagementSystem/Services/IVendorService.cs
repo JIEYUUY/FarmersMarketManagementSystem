@@ -15,8 +15,6 @@ namespace FarmersMarketManagementSystem.Services
 
         bool UpdateVendor(int id, string firstName, string lastName);
 
-        bool DeactivateVendor(int id);
-
-        bool ActivateVendor(int id);
+        bool UpdateVendorStatus(int id, VendorStatus newStatus);
     }
 }

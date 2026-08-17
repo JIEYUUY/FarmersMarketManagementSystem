@@ -24,7 +24,7 @@ namespace FarmersMarketManagementSystem.Services
             }
 
             vendor.Id = nextVendorId++;
-            vendor.IsActive = true;
+            vendor.Status = VendorStatus.Pending;
             vendors.Add(vendor);
 
             return true;
@@ -56,7 +56,7 @@ namespace FarmersMarketManagementSystem.Services
 
             return false;
         }
-        public bool DeactivateVendor(int id)
+        public bool UpdateVendorStatus(int id, VendorStatus newStatus)
         {
             Vendor? vendor = GetVendor(id);
 
@@ -65,7 +65,12 @@ namespace FarmersMarketManagementSystem.Services
                 return false;
             }
 
-            vendor.IsActive = false;
+            if (!Enum.IsDefined(newStatus))
+            {
+                return false;
+            }
+
+            vendor.Status = newStatus;
             return true;
         }
         public List<Vendor> GetActiveVendors()
@@ -73,24 +78,12 @@ namespace FarmersMarketManagementSystem.Services
             List<Vendor> activeVendors = new List<Vendor>();
             foreach (Vendor vendor in vendors)
             {
-                if (vendor.IsActive)
+                if (vendor.Status == VendorStatus.Active)
                 {
                     activeVendors.Add(vendor);
                 }
             }
             return activeVendors;
-        }
-        public bool ActivateVendor(int id)
-        {
-            Vendor? vendor = GetVendor(id);
-
-            if (vendor == null)
-            {
-                return false;
-            }
-
-            vendor.IsActive = true;
-            return true;
         }
     }
 }
