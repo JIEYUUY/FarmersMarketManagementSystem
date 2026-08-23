@@ -17,7 +17,10 @@ namespace FarmersMarketManagementSystem.UI
         {
             Console.WriteLine($"ID：{vendor.Id}");
             Console.WriteLine($"姓名：{vendor.FirstName} {vendor.LastName}");
+            Console.WriteLine($"電話：{vendor.Phone}");
+            Console.WriteLine($"編號：{vendor.BoothNumber}");
             Console.WriteLine($"狀態：{vendor.Status}");
+
             Console.WriteLine();
         }
 
@@ -47,10 +50,11 @@ namespace FarmersMarketManagementSystem.UI
         ====================
 
         1. 顯示啟用中的攤商
-        2. 搜尋攤商
-        3. 新增攤商
-        4. 修改攤商
-        5. 更新攤商狀態
+        2. 依狀態篩選攤商
+        3. 搜尋攤商
+        4. 新增攤商
+        5. 修改攤商
+        6. 更新攤商狀態
         0. 返回主選單
 
         """);
@@ -65,18 +69,22 @@ namespace FarmersMarketManagementSystem.UI
                         break;
 
                     case "2":
-                        SearchVendor();
+                        ShowVendorsByStatus();
                         break;
 
                     case "3":
-                        AddVendor();
+                        SearchVendor();
                         break;
 
                     case "4":
-                        UpdateVendor();
+                        AddVendor();
                         break;
 
                     case "5":
+                        UpdateVendor();
+                        break;
+
+                    case "6":
                         UpdateVendorStatus();
                         break;
 
@@ -86,7 +94,7 @@ namespace FarmersMarketManagementSystem.UI
 
                     default:
                         Console.WriteLine();
-                        Console.WriteLine("輸入錯誤，請輸入 0～5。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～6。");
                         break;
                 }
 
@@ -132,15 +140,21 @@ namespace FarmersMarketManagementSystem.UI
             Console.Write("請輸入攤商姓氏：");
             newVendor.LastName = Console.ReadLine() ?? "";
 
-            bool isAdded = vendorService.AddVendor(newVendor);
+            Console.Write("請輸入攤商電話：");
+            newVendor.Phone = Console.ReadLine() ?? "";
+
+            Console.Write("請輸入攤商編號：");
+            newVendor.BoothNumber = Console.ReadLine() ?? "";
+
+            bool isAdded = vendorService.AddVendor(newVendor, out string message);
 
             if (isAdded)
             {
-                Console.WriteLine("新增攤商成功！");
+                Console.WriteLine(message);
             }
             else
             {
-                Console.WriteLine("新增失敗，姓名不能為空或攤商已存在。");
+                Console.WriteLine($"新增失敗：{message}");
             }
         }
 
@@ -233,6 +247,35 @@ namespace FarmersMarketManagementSystem.UI
             else
             {
                 Console.WriteLine("更新攤商狀態失敗。");
+            }
+        }
+        public void ShowVendorsByStatus()
+        {
+            int? searchStatus = InputHelper.GetIntInput("請輸入要查詢的狀態：(1.Pending 2.Active 3.Suspended 4.Banned)：");
+
+            if (searchStatus == null)
+            {
+                Console.WriteLine("請輸入有效的狀態代碼。");
+                return;
+            }
+
+            if (!Enum.IsDefined(typeof(VendorStatus), searchStatus.Value))
+            {
+                Console.WriteLine("請輸入 1～4 的有效狀態代碼。");
+                return;
+            }
+
+            VendorStatus status = (VendorStatus)searchStatus.Value;
+            var vendors = vendorService.GetVendorsByStatus(status);
+
+            if(vendors.Count == 0)
+            {
+                Console.WriteLine($"找不到狀態為 {status} 的攤商。");
+                return;
+            }
+            foreach (var vendor in vendors)
+            {
+                ShowVendor(vendor);
             }
         }
     }

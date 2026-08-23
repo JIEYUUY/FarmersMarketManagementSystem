@@ -6,12 +6,40 @@ namespace FarmersMarketManagementSystem.Services
     {
         private List<Vendor> vendors = new List<Vendor>();
         private int nextVendorId = 1;
-        public bool AddVendor(Vendor vendor)
+        public bool AddVendor(Vendor vendor, out string message)
         {
             if (string.IsNullOrEmpty(vendor.FirstName) ||
                 string.IsNullOrEmpty(vendor.LastName))
             {
+                message = "姓名不能為空。";
                 return false;
+            }
+
+            if (string.IsNullOrEmpty(vendor.Phone))
+            {
+                message = "電話不能為空。";
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(vendor.BoothNumber))
+            {
+                message = "攤商編號不能為空。";
+                return false;
+            }
+
+            if (vendor.Phone.Length != 10)
+            {
+                message = "電話必須是 10 碼。";
+                return false;
+            }
+
+            foreach (char c in vendor.Phone)
+            {
+                if (!char.IsDigit(c))
+                {
+                    message = "電話必須是數字。";
+                    return false;
+                }
             }
 
             foreach (Vendor existingVendor in vendors)
@@ -19,6 +47,13 @@ namespace FarmersMarketManagementSystem.Services
                 if (existingVendor.FirstName == vendor.FirstName &&
                     existingVendor.LastName == vendor.LastName)
                 {
+                    message = "攤商姓名已存在。";
+                    return false;
+                }
+
+                if (existingVendor.BoothNumber == vendor.BoothNumber)
+                {
+                    message = "攤商編號已存在。";
                     return false;
                 }
             }
@@ -27,6 +62,7 @@ namespace FarmersMarketManagementSystem.Services
             vendor.Status = VendorStatus.Pending;
             vendors.Add(vendor);
 
+            message = "攤商新增成功。";
             return true;
         }
         public Vendor? GetVendor(int id)
@@ -84,6 +120,18 @@ namespace FarmersMarketManagementSystem.Services
                 }
             }
             return activeVendors;
+        }
+        public List<Vendor> GetVendorsByStatus(VendorStatus status)
+        {
+            List<Vendor> filteredVendors = new List<Vendor>();
+            foreach (Vendor vendor in vendors)
+            {
+                if (vendor.Status == status)
+                {
+                    filteredVendors.Add(vendor);
+                }
+            }
+            return filteredVendors;
         }
     }
 }
