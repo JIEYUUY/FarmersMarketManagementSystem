@@ -199,7 +199,6 @@ namespace FarmersMarketManagementSystem.UI
                 Console.WriteLine("修改攤商失敗。");
             }
         }
-
         public void UpdateVendorStatus()
         {
             int? vendorId =

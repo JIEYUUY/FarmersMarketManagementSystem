@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using FarmersMarketManagementSystem.Services;
 using FarmersMarketManagementSystem.UI;
+using FarmersMarketManagementSystem.Data;
 
 namespace FarmersMarketManagementSystem
 {
@@ -8,7 +9,15 @@ namespace FarmersMarketManagementSystem
     {
         static void Main(string[] args)
         {
+            DatabaseConnection db = new DatabaseConnection();
+            db.TestConnection();
+
+            Console.WriteLine("按任意鍵繼續...");
+            Console.ReadKey();
+
             ServiceCollection services = new ServiceCollection();
+
+            services.AddSingleton<DatabaseConnection>();
 
             services.AddSingleton<ICustomerService, CustomerService>();
             services.AddSingleton<CustomerMenu>();

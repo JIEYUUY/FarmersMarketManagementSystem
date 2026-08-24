@@ -1,11 +1,16 @@
-﻿using FarmersMarketManagementSystem.Models;
+﻿using FarmersMarketManagementSystem.Data;
+using FarmersMarketManagementSystem.Models;
+using MySqlConnector;
 
 namespace FarmersMarketManagementSystem.Services
 {
     internal class VendorService : IVendorService
     {
-        private List<Vendor> vendors = new List<Vendor>();
-        private int nextVendorId = 1;
+        private readonly DatabaseConnection databaseConnection;
+        public VendorService(DatabaseConnection databaseConnection)
+        {
+            this.databaseConnection = databaseConnection;
+        }
         public bool AddVendor(Vendor vendor, out string message)
         {
             if (string.IsNullOrEmpty(vendor.FirstName) ||
@@ -42,55 +47,149 @@ namespace FarmersMarketManagementSystem.Services
                 }
             }
 
-            foreach (Vendor existingVendor in vendors)
-            {
-                if (existingVendor.FirstName == vendor.FirstName &&
-                    existingVendor.LastName == vendor.LastName)
-                {
-                    message = "攤商姓名已存在。";
-                    return false;
-                }
+            using MySqlConnection connection =
+            databaseConnection.CreateConnection();
 
-                if (existingVendor.BoothNumber == vendor.BoothNumber)
-                {
-                    message = "攤商編號已存在。";
-                    return false;
-                }
+            connection.Open();
+
+            string checkBoothSql = """
+                                    SELECT COUNT(*)
+                                    FROM Vendors
+                                    WHERE BoothNumber = @BoothNumber;
+                                    """;
+
+            MySqlCommand CheckBoothCommand =
+                new MySqlCommand(checkBoothSql, connection);
+
+            CheckBoothCommand.Parameters.AddWithValue("@BoothNumber", vendor.BoothNumber);
+
+            int boothCount = Convert.ToInt32(CheckBoothCommand.ExecuteScalar());
+
+            if (boothCount > 0)
+            {
+                message = "攤商編號已存在。";
+                return false;
             }
 
-            vendor.Id = nextVendorId++;
-            vendor.Status = VendorStatus.Pending;
-            vendors.Add(vendor);
+            string checkNameSql = """
+                                    SELECT COUNT(*)
+                                    FROM Vendors
+                                    WHERE FirstName = @FirstName AND LastName = @LastName;
+                                    """;
 
-            message = "攤商新增成功。";
-            return true;
+            MySqlCommand checkNameCommand =
+            new MySqlCommand(checkNameSql, connection);
+
+            checkNameCommand.Parameters.AddWithValue("@FirstName",vendor.FirstName);
+            checkNameCommand.Parameters.AddWithValue("@LastName",vendor.LastName);
+
+            int nameCount = Convert.ToInt32(checkNameCommand.ExecuteScalar());
+
+            if (nameCount > 0)
+            {
+                message = "攤商姓名已存在。";
+                return false;
+            }
+
+            vendor.Status = VendorStatus.Pending;
+
+            string sql = """
+                        INSERT INTO Vendors
+                            (FirstName, LastName, Phone, BoothNumber, Status)
+                        VALUES
+                            (@FirstName, @LastName, @Phone, @BoothNumber, @Status);
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@FirstName", vendor.FirstName);
+            command.Parameters.AddWithValue("@LastName", vendor.LastName);
+            command.Parameters.AddWithValue("@Phone", vendor.Phone);
+            command.Parameters.AddWithValue("@BoothNumber", vendor.BoothNumber);
+            command.Parameters.AddWithValue("@Status", (int)vendor.Status);
+
+            int affectedRows = command.ExecuteNonQuery();
+
+            if (affectedRows > 0)
+            {
+                message = "攤商新增成功。";
+                return true;
+            }
+
+            message = "攤商新增失敗。";
+            return false;
         }
         public Vendor? GetVendor(int id)
         {
-            foreach (Vendor vendor in vendors)
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT Id, FirstName, LastName, Phone, BoothNumber, Status
+                        FROM Vendors
+                        WHERE Id = @Id;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@Id", id);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
+            if (reader.Read())
             {
-                if (vendor.Id == id)
-                {
-                    return vendor;
-                }
+                Vendor vendor = new Vendor();
+
+                vendor.Id = reader.GetInt32("Id");
+                vendor.FirstName = reader.GetString("FirstName");
+                vendor.LastName = reader.GetString("LastName");
+                vendor.Phone = reader.GetString("Phone");
+                vendor.BoothNumber = reader.GetString("BoothNumber");
+                vendor.Status = (VendorStatus)reader.GetInt32("Status");
+
+                return vendor;
             }
+
             return null;
         }
         public bool UpdateVendor(int id, string firstName, string lastName)
         {
-            Vendor? vendor = GetVendor(id);
-
-            if (vendor != null &&
-                !string.IsNullOrEmpty(firstName) &&
-                !string.IsNullOrEmpty(lastName))
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
             {
-                vendor.FirstName = firstName;
-                vendor.LastName = lastName;
-
-                return true;
+                return false;
             }
 
-            return false;
+            Vendor? vendor = GetVendor(id);
+
+            if (vendor == null)
+            {
+                return false;
+            }
+
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                            UPDATE Vendors
+                            SET FirstName = @FirstName, LastName = @LastName
+                            WHERE Id = @Id;
+                         """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@FirstName", firstName);
+            command.Parameters.AddWithValue("@LastName", lastName);
+            command.Parameters.AddWithValue("@Id", id);
+            int affectedRows = command.ExecuteNonQuery();
+            return affectedRows > 0;
         }
         public bool UpdateVendorStatus(int id, VendorStatus newStatus)
         {
@@ -101,35 +200,103 @@ namespace FarmersMarketManagementSystem.Services
                 return false;
             }
 
-            if (!Enum.IsDefined(newStatus))
+            if (!Enum.IsDefined(typeof(VendorStatus), newStatus))
             {
                 return false;
             }
 
-            vendor.Status = newStatus;
-            return true;
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                            UPDATE Vendors
+                            SET Status = @Status
+                            WHERE Id = @Id;
+                            """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@Status", (int)newStatus);
+            command.Parameters.AddWithValue("@Id", id);
+            int affectedRows = command.ExecuteNonQuery();
+            return affectedRows > 0;
         }
         public List<Vendor> GetActiveVendors()
         {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT Id, FirstName, LastName, Phone, BoothNumber, Status
+                        FROM Vendors
+                        WHERE Status = @Status;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@Status", (int)VendorStatus.Active);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
             List<Vendor> activeVendors = new List<Vendor>();
-            foreach (Vendor vendor in vendors)
+
+            while (reader.Read())
             {
-                if (vendor.Status == VendorStatus.Active)
-                {
-                    activeVendors.Add(vendor);
-                }
+                Vendor vendor = new Vendor();
+
+                vendor.Id = reader.GetInt32("Id");
+                vendor.FirstName = reader.GetString("FirstName");
+                vendor.LastName = reader.GetString("LastName");
+                vendor.Phone = reader.GetString("Phone");
+                vendor.BoothNumber = reader.GetString("BoothNumber");
+                vendor.Status = (VendorStatus)reader.GetInt32("Status");
+
+                activeVendors.Add(vendor);
             }
             return activeVendors;
         }
         public List<Vendor> GetVendorsByStatus(VendorStatus status)
         {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT Id, FirstName, LastName, Phone, BoothNumber, Status
+                        FROM Vendors
+                        WHERE Status = @Status;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@Status", (int)status);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
             List<Vendor> filteredVendors = new List<Vendor>();
-            foreach (Vendor vendor in vendors)
+
+            while (reader.Read())
             {
-                if (vendor.Status == status)
-                {
-                    filteredVendors.Add(vendor);
-                }
+                Vendor vendor = new Vendor();
+
+                vendor.Id = reader.GetInt32("Id");
+                vendor.FirstName = reader.GetString("FirstName");
+                vendor.LastName = reader.GetString("LastName");
+                vendor.Phone = reader.GetString("Phone");
+                vendor.BoothNumber = reader.GetString("BoothNumber");
+                vendor.Status = (VendorStatus)reader.GetInt32("Status");
+
+                filteredVendors.Add(vendor);
             }
             return filteredVendors;
         }
