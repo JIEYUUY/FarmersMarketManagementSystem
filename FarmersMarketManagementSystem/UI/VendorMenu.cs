@@ -55,6 +55,8 @@ namespace FarmersMarketManagementSystem.UI
         4. 新增攤商
         5. 修改攤商
         6. 更新攤商狀態
+        7. 停用攤商
+        8. 顯示所有攤商
         0. 返回主選單
 
         """);
@@ -88,13 +90,21 @@ namespace FarmersMarketManagementSystem.UI
                         UpdateVendorStatus();
                         break;
 
+                    case "7":
+                        DeactivateVendor();
+                        break;
+
+                    case "8":
+                        GetAllVendors();
+                        break;
+
                     case "0":
                         isVendorMenuRunning = false;
                         break;
 
                     default:
                         Console.WriteLine();
-                        Console.WriteLine("輸入錯誤，請輸入 0～6。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～8。");
                         break;
                 }
 
@@ -222,7 +232,7 @@ namespace FarmersMarketManagementSystem.UI
             Console.WriteLine("找到攤商：");
             ShowVendor(vendor);
 
-            Console.Write("請輸入要更新的狀態：(1.Pending 2.Active 3.Suspended 4.Banned)：");
+            Console.Write("請輸入要更新的狀態：(1.Pending 2.Active 3.Suspended 4.Banned 5.Inactive)：");
             string? statusInput = Console.ReadLine();
 
             if (!int.TryParse(statusInput, out int statusValue))
@@ -233,7 +243,7 @@ namespace FarmersMarketManagementSystem.UI
 
             if (!Enum.IsDefined(typeof(VendorStatus), statusValue))
             {
-                Console.WriteLine("請輸入 1～4 的有效狀態代碼。");
+                Console.WriteLine("請輸入 1～5 的有效狀態代碼。");
                 return;
             }
 
@@ -250,7 +260,7 @@ namespace FarmersMarketManagementSystem.UI
         }
         public void ShowVendorsByStatus()
         {
-            int? searchStatus = InputHelper.GetIntInput("請輸入要查詢的狀態：(1.Pending 2.Active 3.Suspended 4.Banned)：");
+            int? searchStatus = InputHelper.GetIntInput("請輸入要查詢的狀態：(1.Pending 2.Active 3.Suspended 4.Banned 5.Inactive)：");
 
             if (searchStatus == null)
             {
@@ -260,18 +270,74 @@ namespace FarmersMarketManagementSystem.UI
 
             if (!Enum.IsDefined(typeof(VendorStatus), searchStatus.Value))
             {
-                Console.WriteLine("請輸入 1～4 的有效狀態代碼。");
+                Console.WriteLine("請輸入 1～5 的有效狀態代碼。");
                 return;
             }
 
             VendorStatus status = (VendorStatus)searchStatus.Value;
             var vendors = vendorService.GetVendorsByStatus(status);
 
-            if(vendors.Count == 0)
+            if (vendors.Count == 0)
             {
                 Console.WriteLine($"找不到狀態為 {status} 的攤商。");
                 return;
             }
+            foreach (var vendor in vendors)
+            {
+                ShowVendor(vendor);
+            }
+        }
+        public void DeactivateVendor()
+        {
+            int? vendorId =
+                InputHelper.GetIntInput("請輸入要停用的攤商 ID：");
+
+            if (vendorId == null)
+            {
+                Console.WriteLine("請輸入正確的數字!");
+                return;
+            }
+
+            Vendor? vendor = vendorService.GetVendor(vendorId.Value);
+
+            if (vendor == null)
+            {
+                Console.WriteLine("找不到此攤商。");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("找到攤商：");
+            ShowVendor(vendor);
+
+            Console.Write("確定要停用此攤商嗎？(Y/N)：");
+            string? confirmInput = Console.ReadLine();
+
+            if (confirmInput?.Trim().ToUpper() != "Y")
+            {
+                Console.WriteLine("停用已取消。");
+                return;
+            }
+
+            if (vendorService.DeactivateVendor(vendor.Id))
+            {
+                Console.WriteLine("停用攤商成功！");
+            }
+            else
+            {
+                Console.WriteLine("停用攤商失敗。");
+            }
+        }
+        public void GetAllVendors()
+        {
+            List<Vendor> vendors = vendorService.GetAllVendors();
+
+            if (vendors.Count == 0)
+            {
+                Console.WriteLine("找不到任何攤商。");
+                return;
+            }
+
             foreach (var vendor in vendors)
             {
                 ShowVendor(vendor);

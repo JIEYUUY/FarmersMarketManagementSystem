@@ -13,6 +13,10 @@ namespace FarmersMarketManagementSystem.Services
         bool UpdateVendor(int id, string firstName, string lastName);
 
         bool UpdateVendorStatus(int id, VendorStatus newStatus);
+
         List<Vendor> GetVendorsByStatus(VendorStatus status);
+
+        bool DeactivateVendor(int id);
+        List<Vendor> GetAllVendors();
     }
 }
