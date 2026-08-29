@@ -144,7 +144,7 @@ namespace FarmersMarketManagementSystem.UI
         {
             Vendor newVendor = new Vendor();
 
-            Console.Write("請輸入攤商名字：");
+            Console.Write("請輸入攤商姓名：");
             newVendor.FirstName = Console.ReadLine() ?? "";
 
             Console.Write("請輸入攤商姓氏：");

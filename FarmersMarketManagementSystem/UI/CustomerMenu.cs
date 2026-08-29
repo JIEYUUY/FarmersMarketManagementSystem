@@ -14,9 +14,10 @@ namespace FarmersMarketManagementSystem.UI
         public void ShowCustomer(Customer customer)
         {
             Console.WriteLine($"ID：{customer.Id}");
-            Console.WriteLine($"姓名：{customer.Name}");
+            Console.WriteLine($"姓名：{customer.FirstName} {customer.LastName}");
             Console.WriteLine($"電話：{customer.Phone}");
             Console.WriteLine($"城市：{customer.City}");
+            Console.WriteLine($"狀態：{customer.Status}");
         }
         public void ShowAllCustomers()
         {
@@ -46,7 +47,8 @@ namespace FarmersMarketManagementSystem.UI
         2. 搜尋客戶
         3. 新增客戶
         4. 修改客戶
-        5. 刪除客戶
+        5. 停用客戶
+        6. 更新客戶狀態
         0. 返回主選單
 
         """);
@@ -73,7 +75,11 @@ namespace FarmersMarketManagementSystem.UI
                         break;
 
                     case "5":
-                        DeleteCustomer();
+                        DeactivateCustomer();
+                        break;
+
+                    case "6":
+                        UpdateCustomerStatus();
                         break;
 
                     case "0":
@@ -82,7 +88,7 @@ namespace FarmersMarketManagementSystem.UI
 
                     default:
                         Console.WriteLine();
-                        Console.WriteLine("輸入錯誤，請輸入 0～5。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～6。");
                         break;
                 }
 
@@ -99,7 +105,7 @@ namespace FarmersMarketManagementSystem.UI
             int? searchId = InputHelper.GetIntInput("請輸入客戶 ID：");
             if (searchId != null)
             {
-                Customer? customer = customerService.FindCustomerById(searchId.Value);
+                Customer? customer = customerService.GetCustomer(searchId.Value);
 
                 if (customer != null)
                 {
@@ -118,9 +124,13 @@ namespace FarmersMarketManagementSystem.UI
         }
         public void AddCustomer()
         {
-            Console.Write("請輸入客戶姓名：");
             Customer? newCustomer = new Customer();
-            newCustomer.Name = Console.ReadLine() ?? "";
+
+            Console.Write("請輸入客戶姓名：");
+            newCustomer.FirstName = Console.ReadLine() ?? "";
+
+            Console.Write("請輸入客戶姓氏：");
+            newCustomer.LastName = Console.ReadLine() ?? "";
 
             Console.Write("請輸入客戶電話：");
             newCustomer.Phone = Console.ReadLine() ?? "";
@@ -128,87 +138,155 @@ namespace FarmersMarketManagementSystem.UI
             Console.Write("請輸入客戶城市：");
             newCustomer.City = Console.ReadLine() ?? "";
 
-            bool isAdded = customerService.AddCustomer(newCustomer);
+            bool isAdded = customerService.AddCustomer(newCustomer, out string message);
             if (isAdded)
             {
                 Console.WriteLine("新增成功！");
             }
             else
             {
-                Console.WriteLine("客戶姓名不能為空！");
+                Console.WriteLine(message);
             }
         }
         public void UpdateCustomer()
         {
             int? searchId = InputHelper.GetIntInput("請輸入客戶 ID：");
-            if (searchId != null)
+
+            if (searchId == null)
             {
-                Customer? customer = customerService.FindCustomerById(searchId.Value);
-                if (customer != null)
-                {
-                    ShowCustomer(customer);
+                Console.WriteLine("請輸入正確的數字!");
+                return;
+            }
 
-                    string? newName = InputHelper.GetUpdateValue("客戶姓名", customer.Name);
+            Customer? customer = customerService.GetCustomer(searchId.Value);
 
-                    string? newPhone = InputHelper.GetUpdateValue("客戶電話", customer.Phone);
+            if (customer == null)
+            {
+                Console.WriteLine("找不到此客戶。");
+                return;
+            }
 
-                    string? newCity = InputHelper.GetUpdateValue("客戶城市", customer.City);
+            ShowCustomer(customer);
 
-                    customerService.UpdateCustomerInformation(customer, newName, newPhone, newCity);
+            string? newFirstName =
+                InputHelper.GetUpdateValue("客戶名字", customer.FirstName);
 
-                    Console.WriteLine("客戶資料修改成功！");
-                }
-                else
-                {
-                    Console.WriteLine("找不到此客戶。");
-                }
+            string? newLastName =
+                InputHelper.GetUpdateValue("客戶姓氏", customer.LastName);
+
+            string? newPhone =
+                InputHelper.GetUpdateValue("客戶電話", customer.Phone);
+
+            string? newCity =
+                InputHelper.GetUpdateValue("客戶城市", customer.City);
+
+            bool isUpdated = customerService.UpdateCustomerInformation(
+                customer.Id,
+                newFirstName ?? customer.FirstName,
+                newLastName ?? customer.LastName,
+                newPhone ?? customer.Phone,
+                newCity ?? customer.City
+                
+            );
+
+            if (isUpdated)
+            {
+                Console.WriteLine("客戶資料修改成功！");
             }
             else
             {
-                Console.WriteLine("請輸入正確的數字!");
+                Console.WriteLine("修改客戶失敗。");
             }
         }
-        public void DeleteCustomer()
+
+        public void UpdateCustomerStatus()
         {
-            int? deleteId = InputHelper.GetIntInput("請輸入要刪除的客戶 ID：");
-            if (deleteId != null)
+            int? customerId =
+                InputHelper.GetIntInput("請輸入要更新狀態的客戶 ID：");
+
+            if (customerId == null)
             {
-                Customer? customer = customerService.FindCustomerById(deleteId.Value);
+                Console.WriteLine("請輸入正確的數字!");
+                return;
+            }
 
-                if (customer == null)
-                {
-                    Console.WriteLine("找不到此客戶。");
-                }
-                else
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("找到客戶：");
-                    ShowCustomer(customer);
+            Customer? customer = customerService.GetCustomer(customerId.Value);
 
-                    Console.WriteLine();
-                    Console.Write("確定要刪除嗎？(Y/N)：");
-                    string? confirm = Console.ReadLine();
+            if (customer == null)
+            {
+                Console.WriteLine("找不到此客戶。");
+                return;
+            }
 
-                    if (confirm?.ToUpper() == "Y")
-                    {
-                        if (customerService.DeleteCustomer(customer))
-                        {
-                            Console.WriteLine("客戶刪除成功！");
-                        }
-                        else
-                        {
-                            Console.WriteLine("刪除客戶失敗。");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("已取消刪除。");
-                    }
-                }
+            Console.WriteLine();
+            Console.WriteLine("找到客戶：");
+            ShowCustomer(customer);
+
+            Console.Write("請輸入要更新的狀態：(1.Pending 2.Active 3.Suspended 4.Banned 5.Inactive)：");
+            string? statusInput = Console.ReadLine();
+
+            if (!int.TryParse(statusInput, out int statusValue))
+            {
+                Console.WriteLine("請輸入有效的狀態代碼。");
+                return;
+            }
+
+            if (!Enum.IsDefined(typeof(CustomerStatus), statusValue))
+            {
+                Console.WriteLine("請輸入 1～5 的有效狀態代碼。");
+                return;
+            }
+
+            CustomerStatus newStatus = (CustomerStatus)statusValue;
+
+            if (customerService.UpdateCustomerStatus(customer.Id, newStatus))
+            {
+                Console.WriteLine("客戶狀態更新成功！");
             }
             else
             {
+                Console.WriteLine("更新客戶狀態失敗。");
+            }
+        }
+        public void DeactivateCustomer()
+        {
+            int? customerId =
+                InputHelper.GetIntInput("請輸入要停用的客戶 ID：");
+
+            if (customerId == null)
+            {
                 Console.WriteLine("請輸入正確的數字!");
+                return;
+            }
+
+            Customer? customer = customerService.GetCustomer(customerId.Value);
+
+            if (customer == null)
+            {
+                Console.WriteLine("找不到此客戶。");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("找到客戶：");
+            ShowCustomer(customer);
+
+            Console.Write("確定要停用此客戶嗎？(Y/N)：");
+            string? confirmInput = Console.ReadLine();
+
+            if (confirmInput?.Trim().ToUpper() != "Y")
+            {
+                Console.WriteLine("停用已取消。");
+                return;
+            }
+
+            if (customerService.DeactivateCustomer(customer.Id))
+            {
+                Console.WriteLine("停用客戶成功！");
+            }
+            else
+            {
+                Console.WriteLine("停用客戶失敗。");
             }
         }
     }

@@ -4,10 +4,14 @@
     {
         public int Id;
 
-        public string Name = "";
+        public string FirstName = "";
+
+        public string LastName = "";
 
         public string Phone = "";
 
         public string City = "";
+
+        public CustomerStatus Status;
     }
 }

@@ -18,7 +18,15 @@
         public static string? GetUpdateValue(string fieldName, string currentValue)
         {
             Console.Write($"請輸入新的{fieldName}（目前：{currentValue}，直接按 Enter 保留）：");
-            return Console.ReadLine();
+
+            string? input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return null;
+            }
+
+            return input.Trim();
         }
         public static decimal? GetDecimalInput(string message)
         {

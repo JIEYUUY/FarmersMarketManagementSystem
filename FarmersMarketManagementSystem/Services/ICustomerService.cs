@@ -4,13 +4,15 @@ namespace FarmersMarketManagementSystem.Services
 {
     internal interface ICustomerService
     {
-        Customer? FindCustomerById(int id);
-        bool AddCustomer(Customer customer);
+        Customer? GetCustomer(int id);
+        bool AddCustomer(Customer customer, out string message);
 
         List<Customer> GetAllCustomers();
 
-        void UpdateCustomerInformation(Customer customer, string? newName, string? newPhone, string? newCity);
+        bool UpdateCustomerInformation(int id, string firstName, string lastName, string phone, string city);
 
-        bool DeleteCustomer(Customer customer);
+        bool UpdateCustomerStatus(int id, CustomerStatus newStatus);
+
+        bool DeactivateCustomer(int id);
     }
 }
