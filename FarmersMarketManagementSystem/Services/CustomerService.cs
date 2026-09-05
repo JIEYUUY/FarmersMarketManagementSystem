@@ -108,9 +108,15 @@ namespace FarmersMarketManagementSystem.Services
             MySqlCommand checkPhoneCommand =
                 new MySqlCommand(checkPhoneSql, connection);
 
-            checkPhoneCommand.Parameters.AddWithValue("@Phone",customer.Phone);
+            checkPhoneCommand.Parameters.AddWithValue(
+                    "@Phone",
+                    customer.Phone
+                );
 
-            int phoneCount =Convert.ToInt32(checkPhoneCommand.ExecuteScalar());
+            int phoneCount =
+                Convert.ToInt32(
+                    checkPhoneCommand.ExecuteScalar()
+                );
 
             if (phoneCount > 0)
             {
@@ -321,6 +327,61 @@ namespace FarmersMarketManagementSystem.Services
             command.Parameters.AddWithValue("@Status", (int)CustomerStatus.Inactive);
             int affectedRows = command.ExecuteNonQuery();
             return affectedRows > 0;
+        }
+
+        private List<Customer> QueryCustomers(string sql,string keyword)
+        {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            keyword = keyword.Trim();
+
+            command.Parameters.AddWithValue(
+                "@Keyword",
+                $"%{keyword}%"
+            );
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
+            List<Customer> customers =
+                new List<Customer>();
+
+            while (reader.Read())
+            {
+                Customer customer =
+                    MapCustomer(reader);
+
+                customers.Add(customer);
+            }
+
+            return customers;
+        }
+        public List<Customer> SearchCustomersByName(string keyword)
+        {
+            string sql = """
+                        SELECT Id, FirstName, LastName, Phone, City, Status
+                        FROM Customers
+                        WHERE  concat(FirstName, ' ', LastName) LIKE @Keyword;
+                        """;
+
+            return QueryCustomers(sql, keyword);
+        }
+        public List<Customer> SearchCustomersByCity(string keyword)
+        {
+            string sql = """
+                        SELECT Id, FirstName, LastName, Phone, City, Status
+                        FROM Customers
+                        WHERE City LIKE @Keyword
+                        ORDER BY LastName ASC, FirstName ASC;
+                        """;
+
+            return QueryCustomers(sql, keyword);
         }
     }
 }

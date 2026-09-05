@@ -26,7 +26,6 @@ namespace FarmersMarketManagementSystem.UI
                                     2. 搜尋商品
                                     3. 新增商品
                                     4. 修改商品
-                                    5. 刪除商品
                                     0. 返回主選單
 
                                     """);
@@ -52,10 +51,6 @@ namespace FarmersMarketManagementSystem.UI
                         UpdateProduct();
                         break;
 
-                    case "5":
-                        DeleteProduct();
-                        break;
-
                     case "0":
                         isProductMenuRunning = false;
                         break;
@@ -77,9 +72,11 @@ namespace FarmersMarketManagementSystem.UI
         public void ShowProduct(Product product)
         {
             Console.WriteLine($"ID：{product.Id}");
-            Console.WriteLine($"名稱：{product.Name}");
+            Console.WriteLine($"攤商 ID：{product.VendorId}");
+            Console.WriteLine($"名稱：{product.ProductName}");
             Console.WriteLine($"類別：{product.Category}");
-            Console.WriteLine($"價格：{product.Price}");
+            Console.WriteLine($"庫存：{product.Quantity}");
+            Console.WriteLine($"單價：{product.UnitPrice}");
         }
         public void ShowAllProducts()
         {
@@ -117,30 +114,42 @@ namespace FarmersMarketManagementSystem.UI
         {
             Product product = new Product();
 
-            Console.Write("請輸入商品名稱：");
-            product.Name = Console.ReadLine() ?? "";
+            Console.Write("請輸入廠商id：");
+            int? vendorId = InputHelper.GetIntInput("");
+            if (!vendorId.HasValue)
+            {
+                Console.WriteLine("請輸入有效的廠商id！");
+                return;
+            }
+            product.VendorId = vendorId.Value;
 
             Console.Write("請輸入商品類別：");
             product.Category = Console.ReadLine() ?? "";
 
-            decimal? price = InputHelper.GetDecimalInput("請輸入商品價格：");
+            Console.Write("請輸入商品名稱：");
+            product.ProductName = Console.ReadLine() ?? "";
 
-            if (!price.HasValue)
+            Console.Write("請輸入商品庫存：");
+            int? quantity = InputHelper.GetIntInput("");
+            if (!quantity.HasValue)
+            {
+                Console.WriteLine("請輸入有效的商品庫存！");
+                return;
+            }
+            product.Quantity = quantity.Value;
+
+            decimal? unitPrice = InputHelper.GetDecimalInput("請輸入商品價格：");
+
+            if (!unitPrice.HasValue)
             {
                 Console.Write("請輸入有效的商品價格！");
                 return;
             }
 
-            product.Price = price.Value;
+            product.UnitPrice = unitPrice.Value;
 
-            if (productService.AddProduct(product))
-            {
-                Console.WriteLine("添加商品成功！");
-            }
-            else
-            {
-                Console.WriteLine("添加商品失敗！");
-            }
+            productService.AddProduct(product, out string message);
+            Console.WriteLine(message);
         }
         public void UpdateProduct()
         {
@@ -152,54 +161,29 @@ namespace FarmersMarketManagementSystem.UI
 
                 if (product != null)
                 {
-                    Console.WriteLine("請輸入新的商品名稱（留空表示不修改）：");
-                    string? name = Console.ReadLine();
+                    Console.Write("請輸入新的廠商id（留空表示不修改）：");
+                    int? vendorId= InputHelper.GetIntInput("");
 
                     Console.WriteLine("請輸入新的商品類別（留空表示不修改）：");
                     string? category = Console.ReadLine();
 
-                    decimal? price = InputHelper.GetDecimalInput("請輸入新的商品價格（留空表示不修改）：");
+                    Console.WriteLine("請輸入新的商品名稱（留空表示不修改）：");
+                    string? name = Console.ReadLine();
 
-                    productService.UpdateProductInformation(product, name, category, price);
+                    Console.Write("請輸入新的商品庫存（留空表示不修改）：");
+                    int? quantity = InputHelper.GetIntInput("");
 
-                    Console.WriteLine("商品更新成功！");
-                }
-                else
-                {
-                    Console.WriteLine("未找到該產品。");
-                }
-            }
-            else
-            {
-                Console.WriteLine("請輸入正確的數字！");
-            }
-        }
-        public void DeleteProduct()
-        {
-            int? productId = InputHelper.GetIntInput("請輸入要刪除的產品ID：");
-            if (productId.HasValue)
-            {
-                Product? product = productService.FindProductById(productId.Value);
-                if (product != null)
-                {
-                    ShowProduct(product);
-                    Console.WriteLine("確定要刪除嗎？(Y/N)");
+                    decimal? unitPrice = InputHelper.GetDecimalInput("請輸入新的商品價格（留空表示不修改）：");
 
-                    string? confirm = Console.ReadLine();
-                    if (confirm?.ToUpper() == "Y")
+                    bool isUpdated = productService.UpdateProductInformation(product,vendorId,category,name,quantity,unitPrice);
+
+                    if (isUpdated)
                     {
-                        if (productService.DeleteProduct(product))
-                        {
-                            Console.WriteLine("商品刪除成功！");
-                        }
-                        else
-                        {
-                            Console.WriteLine("商品刪除失敗！");
-                        }
+                        Console.WriteLine("商品更新成功！");
                     }
                     else
                     {
-                        Console.WriteLine("已取消刪除。");
+                        Console.WriteLine("商品更新失敗。");
                     }
                 }
                 else

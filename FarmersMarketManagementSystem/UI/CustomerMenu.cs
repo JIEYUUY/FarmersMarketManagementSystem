@@ -49,6 +49,9 @@ namespace FarmersMarketManagementSystem.UI
         4. 修改客戶
         5. 停用客戶
         6. 更新客戶狀態
+        7. 依姓名搜尋客戶
+        8. 依城市搜尋客戶
+
         0. 返回主選單
 
         """);
@@ -82,13 +85,21 @@ namespace FarmersMarketManagementSystem.UI
                         UpdateCustomerStatus();
                         break;
 
+                    case "7":
+                        SearchCustomersByName();
+                        break;
+
+                    case "8":
+                        SearchCustomersByCity();
+                        break;
+
                     case "0":
                         isCustomerMenuRunning = false;
                         break;
 
                     default:
                         Console.WriteLine();
-                        Console.WriteLine("輸入錯誤，請輸入 0～6。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～8。");
                         break;
                 }
 
@@ -287,6 +298,60 @@ namespace FarmersMarketManagementSystem.UI
             else
             {
                 Console.WriteLine("停用客戶失敗。");
+            }
+        }
+        public void SearchCustomersByName()
+        {
+            Console.Write("請輸入要搜尋的客戶姓名：");
+            string? keyword = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                Console.WriteLine("請輸入有效的姓名。");
+                return;
+            }
+
+            List<Customer> customers = customerService.SearchCustomersByName(keyword);
+
+            if (customers.Any())
+            {
+                Console.WriteLine("搜尋結果：");
+                foreach (Customer customer in customers)
+                {
+                    ShowCustomer(customer);
+                    Console.WriteLine();
+                }
+            }
+            else
+            {
+                Console.WriteLine("找不到符合條件的客戶。");
+            }
+        }
+        public void SearchCustomersByCity()
+        {
+            Console.Write("請輸入要搜尋的客戶城市：");
+            string? keyword = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                Console.WriteLine("請輸入有效的城市名稱。");
+                return;
+            }
+
+            List<Customer> customers = customerService.SearchCustomersByCity(keyword);
+
+            if (customers.Any())
+            {
+                Console.WriteLine("搜尋結果：");
+                foreach (Customer customer in customers)
+                {
+                    ShowCustomer(customer);
+                    Console.WriteLine();
+                }
+            }
+            else
+            {
+                Console.WriteLine("找不到符合條件的客戶。");
             }
         }
     }

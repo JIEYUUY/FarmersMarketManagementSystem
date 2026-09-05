@@ -4,10 +4,14 @@
     {
         public int Id;
 
-        public string Name = "";
+        public int VendorId;
 
         public string Category = "";
 
-        public decimal Price;
+        public string ProductName = "";
+
+        public int Quantity;
+
+        public decimal UnitPrice;
     }
 }

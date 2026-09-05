@@ -5,12 +5,12 @@ namespace FarmersMarketManagementSystem.Services
     internal interface IProductService
     {
         Product? FindProductById(int id);
-        bool AddProduct(Product product);
+
+        bool AddProduct(Product product, out string message);
 
         List<Product> GetAllProducts();
 
-        void UpdateProductInformation(Product product, string? newName, string? newCategory, decimal? newPrice);
+        bool UpdateProductInformation(Product product, int? newVendorId, string? newCategory, string? newProductName, int? newQuantity, decimal? newUnitPrice);
 
-        bool DeleteProduct(Product product);
     }
 }

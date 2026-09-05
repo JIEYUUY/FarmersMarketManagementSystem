@@ -11,6 +11,19 @@ namespace FarmersMarketManagementSystem.Services
         {
             this.databaseConnection = databaseConnection;
         }
+        private Vendor MapVendor(MySqlDataReader reader)
+        {
+            Vendor vendor = new Vendor();
+
+            vendor.Id = reader.GetInt32("Id");
+            vendor.FirstName = reader.GetString("FirstName");
+            vendor.LastName = reader.GetString("LastName");
+            vendor.Phone = reader.GetString("Phone");
+            vendor.BoothNumber = reader.GetString("BoothNumber");
+            vendor.Status = (VendorStatus)reader.GetInt32("Status");
+
+            return vendor;
+        }
         public bool AddVendor(Vendor vendor, out string message)
         {
             if (string.IsNullOrEmpty(vendor.FirstName) ||
@@ -275,19 +288,6 @@ namespace FarmersMarketManagementSystem.Services
                 filteredVendors.Add(vendor);
             }
             return filteredVendors;
-        }
-        private Vendor MapVendor(MySqlDataReader reader)
-        {
-            Vendor vendor = new Vendor();
-
-            vendor.Id = reader.GetInt32("Id");
-            vendor.FirstName = reader.GetString("FirstName");
-            vendor.LastName = reader.GetString("LastName");
-            vendor.Phone = reader.GetString("Phone");
-            vendor.BoothNumber = reader.GetString("BoothNumber");
-            vendor.Status = (VendorStatus)reader.GetInt32("Status");
-
-            return vendor;
         }
         public bool DeactivateVendor(int id)
         {
