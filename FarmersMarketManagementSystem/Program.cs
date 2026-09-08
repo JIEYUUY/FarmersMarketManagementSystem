@@ -28,6 +28,9 @@ namespace FarmersMarketManagementSystem
             services.AddSingleton<IVendorService, VendorService>();
             services.AddSingleton<VendorMenu>();
 
+            services.AddSingleton<IOrderService, OrderService>();
+            services.AddSingleton<OrderMenu>();
+
             ServiceProvider serviceProvider = services.BuildServiceProvider();
 
             CustomerMenu customerMenu =
@@ -38,6 +41,9 @@ namespace FarmersMarketManagementSystem
 
             VendorMenu vendorMenu =
                 serviceProvider.GetRequiredService<VendorMenu>();
+
+            OrderMenu orderMenu =
+                serviceProvider.GetRequiredService<OrderMenu>();
 
             bool isRunning = true;
 
@@ -52,7 +58,7 @@ namespace FarmersMarketManagementSystem
                 Console.WriteLine("1. 客戶管理");
                 Console.WriteLine("2. 商品管理");
                 Console.WriteLine("3. 攤商管理");
-                Console.WriteLine("4. 銷售報表");
+                Console.WriteLine("4. 訂單管理");
                 Console.WriteLine("5. 系統資訊");
                 Console.WriteLine("0. 離開系統");
                 Console.WriteLine();
@@ -75,8 +81,7 @@ namespace FarmersMarketManagementSystem
                         break;
 
                     case "4":
-                        Console.WriteLine();
-                        Console.WriteLine("已進入銷售報表功能。");
+                        orderMenu.ShowOrderMenu();
                         break;
 
                     case "5":
