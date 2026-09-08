@@ -44,24 +44,26 @@ namespace FarmersMarketManagementSystem.Services
                 return false;
             }
 
-            foreach (OrderItem existingItem in order.Items)
+            OrderItem? existingItem =
+                order.Items.FirstOrDefault(
+                    item => item.ProductId == productId
+                );
+
+            if (existingItem != null)
             {
-                if (existingItem.ProductId == productId)
+                int newQuantity =
+                    existingItem.Quantity + quantity;
+
+                if (newQuantity > product.Quantity)
                 {
-                    int newQuantity =
-                        existingItem.Quantity + quantity;
-
-                    if (newQuantity > product.Quantity)
-                    {
-                        message = "庫存不足，無法加入更多商品。";
-                        return false;
-                    }
-
-                    existingItem.Quantity = newQuantity;
-
-                    message = "商品數量已更新。";
-                    return true;
+                    message = "庫存不足，無法加入更多商品。";
+                    return false;
                 }
+
+                existingItem.Quantity = newQuantity;
+
+                message = "商品數量已更新。";
+                return true;
             }
 
             OrderItem item = new OrderItem();
