@@ -205,5 +205,103 @@ namespace FarmersMarketManagementSystem.Services
                 return false;
             }
         }
+        public Order? GetOrderById(int id)
+        {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT Id, CustomerId, OrderDate, TotalPrice
+                        FROM Orders
+                        WHERE Id = @Id;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@Id", id);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
+            if (reader.Read())
+            {
+                Order order = new Order();
+
+                order.Id = reader.GetInt32("Id");
+                order.CustomerId = reader.GetInt32("CustomerId");
+                order.OrderDate = reader.GetDateTime("OrderDate");
+                order.TotalPrice = reader.GetDecimal("TotalPrice");
+
+                return order;
+            }
+
+            return null;
+        }
+        public OrderDetail? GetOrderDetail(int orderId)
+        {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT
+                            o.Id AS OrderId,
+                            c.FirstName,
+                            c.LastName,
+                            o.OrderDate,
+                            o.TotalPrice,
+                            p.Id AS ProductId,
+                            p.ProductName,
+                            oi.Quantity,
+                            oi.UnitPrice
+                        FROM Orders o
+                        JOIN Customers c
+                            ON o.CustomerId = c.Id
+                        JOIN OrderItems oi
+                            ON o.Id = oi.OrderId
+                        JOIN Products p
+                            ON oi.ProductId = p.Id
+                        WHERE o.Id = @OrderId;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@OrderId", orderId);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
+            OrderDetail? detail = null;
+
+            while (reader.Read())
+            {
+                if (detail == null)
+                {
+                    detail = new OrderDetail();
+
+                    detail.OrderId = reader.GetInt32("OrderId");
+                    detail.CustomerName =
+                        $"{reader.GetString("FirstName")} {reader.GetString("LastName")}";
+
+                    detail.OrderDate = reader.GetDateTime("OrderDate");
+                    detail.TotalPrice = reader.GetDecimal("TotalPrice");
+                }
+
+                detail.Items.Add(new OrderDetailItem
+                {
+                    ProductId = reader.GetInt32("ProductId"),
+                    ProductName = reader.GetString("ProductName"),
+                    Quantity = reader.GetInt32("Quantity"),
+                    UnitPrice = reader.GetDecimal("UnitPrice")
+                });
+            }
+
+            return detail;
+        }
     }
 }

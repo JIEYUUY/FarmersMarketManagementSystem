@@ -10,5 +10,7 @@ namespace FarmersMarketManagementSystem.Services
             int quantity,
             out string message);
         bool CreateOrder(Order order, out string message);
+        Order? GetOrderById(int id);
+        OrderDetail? GetOrderDetail(int orderId);
     }
 }

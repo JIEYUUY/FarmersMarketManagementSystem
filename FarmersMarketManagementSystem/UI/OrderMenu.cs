@@ -34,6 +34,7 @@ namespace FarmersMarketManagementSystem.UI
                     ====================
 
                     1. 建立訂單
+                    2. 查詢訂單
                     0. 返回主選單
 
                     """);
@@ -45,6 +46,10 @@ namespace FarmersMarketManagementSystem.UI
                 {
                     case "1":
                         CreateOrder();
+                        break;
+
+                    case "2":
+                        SearchOrder();
                         break;
 
                     case "0":
@@ -200,6 +205,51 @@ namespace FarmersMarketManagementSystem.UI
             {
                 Console.WriteLine(message);
             }
+        }
+        private void SearchOrder()
+        {
+            Console.Write("請輸入訂單 ID：");
+
+            if (!int.TryParse(Console.ReadLine(), out int orderId))
+            {
+                Console.WriteLine("訂單 ID 格式錯誤。");
+                return;
+            }
+
+            OrderDetail? detail =
+                orderService.GetOrderDetail(orderId);
+
+            if (detail == null)
+            {
+                Console.WriteLine("找不到這筆訂單。");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine($"訂單 ID：{detail.OrderId}");
+            Console.WriteLine($"客戶：{detail.CustomerName}");
+            Console.WriteLine($"訂單日期：{detail.OrderDate}");
+            Console.WriteLine();
+
+            Console.WriteLine("商品明細：");
+
+            foreach (OrderDetailItem item in detail.Items)
+            {
+                decimal subtotal =
+                    item.Quantity * item.UnitPrice;
+
+                Console.WriteLine(
+                    $"{item.ProductName} | " +
+                    $"數量：{item.Quantity} | " +
+                    $"單價：{item.UnitPrice:C} | " +
+                    $"小計：{subtotal:C}"
+                );
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(
+                $"總金額：{detail.TotalPrice:C}"
+            );
         }
     }
 }
