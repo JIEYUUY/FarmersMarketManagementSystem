@@ -35,6 +35,7 @@ namespace FarmersMarketManagementSystem.UI
 
                     1. 建立訂單
                     2. 查詢訂單
+                    3. 查詢客戶訂單
                     0. 返回主選單
 
                     """);
@@ -52,12 +53,16 @@ namespace FarmersMarketManagementSystem.UI
                         SearchOrder();
                         break;
 
+                    case "3":
+                        GetOrdersByCustomer();
+                        break;
+
                     case "0":
                         isOrderMenuRunning = false;
                         break;
 
                     default:
-                        Console.WriteLine("輸入錯誤，請輸入 0～1。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～3。");
                         break;
                 }
 
@@ -129,6 +134,7 @@ namespace FarmersMarketManagementSystem.UI
 
             order.CustomerId = customerId.Value;
             order.OrderDate = DateTime.Now;
+            order.Status = OrderStatus.Pending;
 
             bool isAddingItems = true;
 
@@ -250,6 +256,45 @@ namespace FarmersMarketManagementSystem.UI
             Console.WriteLine(
                 $"總金額：{detail.TotalPrice:C}"
             );
+        }
+        private void GetOrdersByCustomer()
+        {
+            Console.Write("請輸入客戶 ID：");
+
+            if (!int.TryParse(Console.ReadLine(), out int customerId))
+            {
+                Console.WriteLine("客戶 ID 格式錯誤。");
+                return;
+            }
+
+            Customer? customer =
+                customerService.GetCustomer(customerId);
+
+            if (customer == null)
+            {
+                Console.WriteLine("找不到此客戶。");
+                return;
+            }
+
+            List<Order> orders = orderService.GetOrdersByCustomer(customerId);
+
+            if (orders.Count == 0)
+            {
+                Console.WriteLine("該客戶沒有任何訂單。");
+                return;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("訂單列表：");
+
+            foreach (Order order in orders)
+            {
+                Console.WriteLine(
+                    $"訂單 ID：{order.Id} | " +
+                    $"訂單日期：{order.OrderDate} | " +
+                    $"總金額：{order.TotalPrice:C}"
+                );
+            }
         }
     }
 }

@@ -12,5 +12,6 @@ namespace FarmersMarketManagementSystem.Services
         bool CreateOrder(Order order, out string message);
         Order? GetOrderById(int id);
         OrderDetail? GetOrderDetail(int orderId);
+        List<Order> GetOrdersByCustomer(int customerId);
     }
 }

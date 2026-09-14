@@ -96,11 +96,11 @@ namespace FarmersMarketManagementSystem.Services
 
                 //新增 Orders
                 string orderSql = """
-            INSERT INTO Orders
-                (CustomerId, OrderDate, TotalPrice)
-            VALUES
-                (@CustomerId, @OrderDate, @TotalPrice);
-            """;
+                                INSERT INTO Orders
+                                    (CustomerId, OrderDate, TotalPrice, Status)
+                                VALUES
+                                    (@CustomerId, @OrderDate, @TotalPrice, @Status);
+                                """;
 
                 MySqlCommand orderCommand =
                     new MySqlCommand(orderSql, connection, transaction);
@@ -116,6 +116,10 @@ namespace FarmersMarketManagementSystem.Services
                 orderCommand.Parameters.AddWithValue(
                     "@TotalPrice",
                     order.TotalPrice);
+                
+                orderCommand.Parameters.AddWithValue(
+                    "@Status",
+                    (int)order.Status);
 
                 orderCommand.ExecuteNonQuery();
 
@@ -213,7 +217,7 @@ namespace FarmersMarketManagementSystem.Services
             connection.Open();
 
             string sql = """
-                        SELECT Id, CustomerId, OrderDate, TotalPrice
+                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status
                         FROM Orders
                         WHERE Id = @Id;
                         """;
@@ -234,6 +238,7 @@ namespace FarmersMarketManagementSystem.Services
                 order.CustomerId = reader.GetInt32("CustomerId");
                 order.OrderDate = reader.GetDateTime("OrderDate");
                 order.TotalPrice = reader.GetDecimal("TotalPrice");
+                order.Status = (OrderStatus)reader.GetInt32("Status");
 
                 return order;
             }
@@ -257,7 +262,8 @@ namespace FarmersMarketManagementSystem.Services
                             p.Id AS ProductId,
                             p.ProductName,
                             oi.Quantity,
-                            oi.UnitPrice
+                            oi.UnitPrice,
+                            o.Status
                         FROM Orders o
                         JOIN Customers c
                             ON o.CustomerId = c.Id
@@ -290,6 +296,7 @@ namespace FarmersMarketManagementSystem.Services
 
                     detail.OrderDate = reader.GetDateTime("OrderDate");
                     detail.TotalPrice = reader.GetDecimal("TotalPrice");
+                    detail.Status = (OrderStatus)reader.GetInt32("Status");
                 }
 
                 detail.Items.Add(new OrderDetailItem
@@ -302,6 +309,114 @@ namespace FarmersMarketManagementSystem.Services
             }
 
             return detail;
+        }
+        public List<Order> GetOrdersByCustomer(int customerId)
+        {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status
+                        FROM Orders
+                        WHERE CustomerId = @CustomerId
+                        ORDER BY OrderDate DESC;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@CustomerId", customerId);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
+            List<Order> orders = new List<Order>();
+
+            while (reader.Read())
+            {
+                Order order = new Order();
+
+                order.Id = reader.GetInt32("Id");
+                order.CustomerId = reader.GetInt32("CustomerId");
+                order.OrderDate = reader.GetDateTime("OrderDate");
+                order.TotalPrice = reader.GetDecimal("TotalPrice");
+                order.Status = (OrderStatus)reader.GetInt32("Status");
+
+                orders.Add(order);
+            }
+
+            return orders;
+        }
+        public bool UpdateOrderStatus(
+            int orderId,
+            OrderStatus newStatus,
+            out string message)
+        {
+            Order? order = GetOrderById(orderId);
+
+            if (order == null)
+            {
+                message = "找不到此訂單。";
+                return false;
+            }            
+
+            if (order.Status == OrderStatus.Completed ||
+                order.Status == OrderStatus.Cancelled)
+            {
+                message = $"目前訂單狀態為{order.Status}，不允許更新此訂單狀態。";
+                return false;
+            }
+
+            if (order.Status == OrderStatus.Pending)
+            {
+                if (newStatus != OrderStatus.Paid &&
+                    newStatus != OrderStatus.Cancelled)
+                {
+                    message = "Pending 只能變更為 Paid 或 Cancelled。";
+                    return false;
+                }
+            }
+
+            if (order.Status == OrderStatus.Paid)
+            {
+                if (newStatus != OrderStatus.Completed &&
+                    newStatus != OrderStatus.Cancelled)
+                {
+                    message = "Paid 只能變更為 Completed 或 Cancelled。";
+                    return false;
+                }
+            }
+
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        UPDATE Orders
+                        SET Status = @Status
+                        WHERE Id = @OrderId;
+                        """;
+            MySqlCommand command = 
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@Status", (int)newStatus);
+            command.Parameters.AddWithValue("@OrderId", orderId);
+
+            int affectedRows = command.ExecuteNonQuery();
+            
+            if (affectedRows > 0)
+            {
+                message = "訂單狀態更新成功。";
+                return true;
+            }
+            else
+            {
+                message = "訂單狀態更新失敗。";
+                return false;
+            }
         }
     }
 }

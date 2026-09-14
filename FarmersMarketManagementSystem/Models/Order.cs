@@ -8,6 +8,8 @@
 
         public DateTime OrderDate;
 
+        public OrderStatus Status;
+
         public decimal TotalPrice;
 
         public List<OrderItem> Items = new List<OrderItem>();

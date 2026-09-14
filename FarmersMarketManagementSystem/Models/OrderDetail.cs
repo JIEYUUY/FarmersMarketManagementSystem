@@ -11,5 +11,7 @@
         public decimal TotalPrice;
 
         public List<OrderDetailItem> Items = new List<OrderDetailItem>();
+
+        public OrderStatus Status;
     }
 }
