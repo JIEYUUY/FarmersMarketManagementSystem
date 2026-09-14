@@ -36,6 +36,7 @@ namespace FarmersMarketManagementSystem.UI
                     1. 建立訂單
                     2. 查詢訂單
                     3. 查詢客戶訂單
+                    4. 取消訂單
                     0. 返回主選單
 
                     """);
@@ -57,12 +58,16 @@ namespace FarmersMarketManagementSystem.UI
                         GetOrdersByCustomer();
                         break;
 
+                    case "4":
+                        CancelOrder();
+                        break;
+
                     case "0":
                         isOrderMenuRunning = false;
                         break;
 
                     default:
-                        Console.WriteLine("輸入錯誤，請輸入 0～3。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～4。");
                         break;
                 }
 
@@ -295,6 +300,21 @@ namespace FarmersMarketManagementSystem.UI
                     $"總金額：{order.TotalPrice:C}"
                 );
             }
+        }
+        public void CancelOrder()
+        {
+            Console.Write("請輸入要取消的訂單 ID：");
+
+            if (!int.TryParse(Console.ReadLine(), out int orderId))
+            {
+                Console.WriteLine("訂單 ID 格式錯誤。");
+                return;
+            }
+
+            orderService.CancelOrder(orderId, out string message);
+
+            Console.WriteLine(message);
+            
         }
     }
 }

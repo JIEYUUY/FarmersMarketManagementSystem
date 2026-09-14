@@ -1,6 +1,7 @@
 ﻿using FarmersMarketManagementSystem.Data;
 using FarmersMarketManagementSystem.Models;
 using MySqlConnector;
+using System.Reflection.PortableExecutable;
 
 namespace FarmersMarketManagementSystem.Services
 {
@@ -415,6 +416,145 @@ namespace FarmersMarketManagementSystem.Services
             else
             {
                 message = "訂單狀態更新失敗。";
+                return false;
+            }
+        }
+        public bool CancelOrder(int orderId,out string message)
+        {
+            Order? order = GetOrderById(orderId);
+
+            if (order == null)
+            {
+                message = "找不到此訂單。";
+                return false;
+            }
+
+            if (order.Status == OrderStatus.Completed ||
+                order.Status == OrderStatus.Cancelled)
+            {
+                message =
+                    $"目前訂單狀態為 {order.Status}，無法取消訂單。";
+
+                return false;
+            }
+
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            using MySqlTransaction transaction =
+                connection.BeginTransaction();
+            try
+            {
+                string sql = """
+                            SELECT ProductId, Quantity
+                            FROM OrderItems
+                            WHERE OrderId = @OrderId;
+                            """;
+
+                MySqlCommand command =
+                    new MySqlCommand(
+                        sql,
+                        connection,
+                        transaction);
+
+                command.Parameters.AddWithValue(
+                    "@OrderId",
+                    orderId);
+
+                List<OrderItem> orderItems =
+                    new List<OrderItem>();
+
+                using (MySqlDataReader reader =
+                    command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        OrderItem orderItem =
+                            new OrderItem();
+
+                        orderItem.ProductId =
+                            reader.GetInt32("ProductId");
+
+                        orderItem.Quantity =
+                            reader.GetInt32("Quantity");
+
+                        orderItems.Add(orderItem);
+                    }
+                }
+
+                foreach (OrderItem item in orderItems)
+                {
+                    string stockSql = """
+                                    UPDATE Products
+                                    SET Quantity = Quantity + @Quantity
+                                    WHERE Id = @ProductId;
+                                    """;
+
+                    MySqlCommand stockCommand =
+                        new MySqlCommand(
+                            stockSql,
+                            connection,
+                            transaction);
+
+                    stockCommand.Parameters.AddWithValue(
+                        "@Quantity",
+                        item.Quantity);
+
+                    stockCommand.Parameters.AddWithValue(
+                        "@ProductId",
+                        item.ProductId);
+
+                    int stockAffectedRows =
+                        stockCommand.ExecuteNonQuery();
+
+                    if (stockAffectedRows == 0)
+                    {
+                        throw new InvalidOperationException(
+                            "商品庫存恢復失敗。");
+                    }
+                }
+
+                string statusSql = """
+                                UPDATE Orders
+                                SET Status = @Status
+                                WHERE Id = @OrderId;
+                                """;
+
+                MySqlCommand statusCommand =
+                    new MySqlCommand(
+                        statusSql,
+                        connection,
+                        transaction);
+
+                statusCommand.Parameters.AddWithValue(
+                    "@Status",
+                    (int)OrderStatus.Cancelled);
+
+                statusCommand.Parameters.AddWithValue(
+                    "@OrderId",
+                    orderId);
+
+                int statusAffectedRows =
+                    statusCommand.ExecuteNonQuery();
+
+                if (statusAffectedRows == 0)
+                {
+                    throw new InvalidOperationException(
+                        "訂單狀態更新失敗。");
+                }
+
+                transaction.Commit();
+
+                message = "訂單取消成功。";
+                return true;
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+
+                message = "訂單取消失敗。";
                 return false;
             }
         }
