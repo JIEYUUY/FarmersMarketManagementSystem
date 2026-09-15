@@ -117,7 +117,7 @@ namespace FarmersMarketManagementSystem.Services
                 orderCommand.Parameters.AddWithValue(
                     "@TotalPrice",
                     order.TotalPrice);
-                
+
                 orderCommand.Parameters.AddWithValue(
                     "@Status",
                     (int)order.Status);
@@ -361,7 +361,7 @@ namespace FarmersMarketManagementSystem.Services
             {
                 message = "找不到此訂單。";
                 return false;
-            }            
+            }
 
             if (order.Status == OrderStatus.Completed ||
                 order.Status == OrderStatus.Cancelled)
@@ -390,6 +390,13 @@ namespace FarmersMarketManagementSystem.Services
                 }
             }
 
+            if (newStatus == OrderStatus.Cancelled)
+            {
+                bool cancelResult = CancelOrder(orderId, out string cancelMessage);
+                message = cancelMessage;
+                return cancelResult;
+            }
+
             using MySqlConnection connection =
                 databaseConnection.CreateConnection();
 
@@ -400,14 +407,15 @@ namespace FarmersMarketManagementSystem.Services
                         SET Status = @Status
                         WHERE Id = @OrderId;
                         """;
-            MySqlCommand command = 
+            MySqlCommand command =
                 new MySqlCommand(sql, connection);
 
             command.Parameters.AddWithValue("@Status", (int)newStatus);
             command.Parameters.AddWithValue("@OrderId", orderId);
 
             int affectedRows = command.ExecuteNonQuery();
-            
+
+
             if (affectedRows > 0)
             {
                 message = "訂單狀態更新成功。";
@@ -418,8 +426,9 @@ namespace FarmersMarketManagementSystem.Services
                 message = "訂單狀態更新失敗。";
                 return false;
             }
+
         }
-        public bool CancelOrder(int orderId,out string message)
+        public bool CancelOrder(int orderId, out string message)
         {
             Order? order = GetOrderById(orderId);
 
