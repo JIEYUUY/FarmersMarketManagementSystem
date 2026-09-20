@@ -13,5 +13,7 @@
         public List<OrderDetailItem> Items = new List<OrderDetailItem>();
 
         public OrderStatus Status;
+
+        public int? MergedIntoOrderId;
     }
 }

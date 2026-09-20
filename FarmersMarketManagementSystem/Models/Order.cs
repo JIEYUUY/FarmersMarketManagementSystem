@@ -25,5 +25,6 @@
 
             return total;
         }
+        public int? MergedIntoOrderId;
     }
 }

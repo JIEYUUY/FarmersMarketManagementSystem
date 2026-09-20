@@ -37,6 +37,7 @@ namespace FarmersMarketManagementSystem.UI
                     2. 查詢訂單
                     3. 查詢客戶訂單
                     4. 取消訂單
+                    5. 合併訂單
                     0. 返回主選單
 
                     """);
@@ -62,12 +63,16 @@ namespace FarmersMarketManagementSystem.UI
                         CancelOrder();
                         break;
 
+                    case "5":
+                        MergeOrders();
+                        break;
+
                     case "0":
                         isOrderMenuRunning = false;
                         break;
 
                     default:
-                        Console.WriteLine("輸入錯誤，請輸入 0～4。");
+                        Console.WriteLine("輸入錯誤，請輸入 0～5。");
                         break;
                 }
 
@@ -240,6 +245,7 @@ namespace FarmersMarketManagementSystem.UI
             Console.WriteLine($"訂單 ID：{detail.OrderId}");
             Console.WriteLine($"客戶：{detail.CustomerName}");
             Console.WriteLine($"訂單日期：{detail.OrderDate}");
+            Console.WriteLine($"訂單狀態：{detail.Status}");
             Console.WriteLine();
 
             Console.WriteLine("商品明細：");
@@ -315,6 +321,33 @@ namespace FarmersMarketManagementSystem.UI
 
             Console.WriteLine(message);
             
+        }
+        private void MergeOrders()
+        {
+            int? orderId1 =
+                InputHelper.GetIntInput("請輸入第一張訂單 ID：");
+
+            if (!orderId1.HasValue)
+            {
+                Console.WriteLine("請輸入有效的訂單 ID。");
+                return;
+            }
+
+            int? orderId2 =
+                InputHelper.GetIntInput("請輸入第二張訂單 ID：");
+
+            if (!orderId2.HasValue)
+            {
+                Console.WriteLine("請輸入有效的訂單 ID。");
+                return;
+            }
+
+            bool result = orderService.MergeOrders(
+                orderId1.Value,
+                orderId2.Value,
+                out string message);
+
+            Console.WriteLine(message);
         }
     }
 }

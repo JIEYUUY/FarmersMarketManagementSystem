@@ -1,7 +1,6 @@
 ﻿using FarmersMarketManagementSystem.Data;
 using FarmersMarketManagementSystem.Models;
 using MySqlConnector;
-using System.Reflection.PortableExecutable;
 
 namespace FarmersMarketManagementSystem.Services
 {
@@ -218,7 +217,7 @@ namespace FarmersMarketManagementSystem.Services
             connection.Open();
 
             string sql = """
-                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status
+                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status, MergedIntoOrderId
                         FROM Orders
                         WHERE Id = @Id;
                         """;
@@ -240,6 +239,14 @@ namespace FarmersMarketManagementSystem.Services
                 order.OrderDate = reader.GetDateTime("OrderDate");
                 order.TotalPrice = reader.GetDecimal("TotalPrice");
                 order.Status = (OrderStatus)reader.GetInt32("Status");
+                if (!reader.IsDBNull(reader.GetOrdinal("MergedIntoOrderId")))
+                {
+                    order.MergedIntoOrderId = reader.GetInt32("MergedIntoOrderId");
+                }
+                else
+                {
+                    order.MergedIntoOrderId = null;
+                }
 
                 return order;
             }
@@ -264,7 +271,8 @@ namespace FarmersMarketManagementSystem.Services
                             p.ProductName,
                             oi.Quantity,
                             oi.UnitPrice,
-                            o.Status
+                            o.Status,
+                            o.MergedIntoOrderId
                         FROM Orders o
                         JOIN Customers c
                             ON o.CustomerId = c.Id
@@ -298,6 +306,9 @@ namespace FarmersMarketManagementSystem.Services
                     detail.OrderDate = reader.GetDateTime("OrderDate");
                     detail.TotalPrice = reader.GetDecimal("TotalPrice");
                     detail.Status = (OrderStatus)reader.GetInt32("Status");
+                    detail.MergedIntoOrderId = reader.IsDBNull(reader.GetOrdinal("MergedIntoOrderId")) 
+                        ? null 
+                        : reader.GetInt32("MergedIntoOrderId");
                 }
 
                 detail.Items.Add(new OrderDetailItem
@@ -319,7 +330,7 @@ namespace FarmersMarketManagementSystem.Services
             connection.Open();
 
             string sql = """
-                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status
+                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status, MergedIntoOrderId
                         FROM Orders
                         WHERE CustomerId = @CustomerId
                         ORDER BY OrderDate DESC;
@@ -344,6 +355,9 @@ namespace FarmersMarketManagementSystem.Services
                 order.OrderDate = reader.GetDateTime("OrderDate");
                 order.TotalPrice = reader.GetDecimal("TotalPrice");
                 order.Status = (OrderStatus)reader.GetInt32("Status");
+                order.MergedIntoOrderId = reader.IsDBNull(reader.GetOrdinal("MergedIntoOrderId"))
+                        ? null
+                        : reader.GetInt32("MergedIntoOrderId");
 
                 orders.Add(order);
             }
@@ -364,7 +378,8 @@ namespace FarmersMarketManagementSystem.Services
             }
 
             if (order.Status == OrderStatus.Completed ||
-                order.Status == OrderStatus.Cancelled)
+                order.Status == OrderStatus.Cancelled ||
+                order.Status == OrderStatus.Merged)
             {
                 message = $"目前訂單狀態為{order.Status}，不允許更新此訂單狀態。";
                 return false;
@@ -439,7 +454,8 @@ namespace FarmersMarketManagementSystem.Services
             }
 
             if (order.Status == OrderStatus.Completed ||
-                order.Status == OrderStatus.Cancelled)
+                order.Status == OrderStatus.Cancelled ||
+                order.Status == OrderStatus.Merged)
             {
                 message =
                     $"目前訂單狀態為 {order.Status}，無法取消訂單。";
@@ -564,6 +580,300 @@ namespace FarmersMarketManagementSystem.Services
                 transaction.Rollback();
 
                 message = "訂單取消失敗。";
+                return false;
+            }
+        }
+        public List<OrderItem> GetOrderItemsByOrderId(int orderId)
+        {
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            string sql = """
+                        SELECT Id, OrderId, ProductId, Quantity, UnitPrice
+                        FROM OrderItems
+                        WHERE OrderId = @OrderId;
+                        """;
+
+            MySqlCommand command =
+                new MySqlCommand(sql, connection);
+
+            command.Parameters.AddWithValue("@OrderId", orderId);
+
+            using MySqlDataReader reader =
+                command.ExecuteReader();
+
+            List<OrderItem> orderItems = new List<OrderItem>();
+
+            while (reader.Read())
+            {
+                OrderItem item = new OrderItem();
+
+                item.Id = reader.GetInt32("Id");
+                item.OrderId = reader.GetInt32("OrderId");
+                item.ProductId = reader.GetInt32("ProductId");
+                item.Quantity = reader.GetInt32("Quantity");
+                item.UnitPrice = reader.GetDecimal("UnitPrice");
+
+                orderItems.Add(item);
+            }
+
+            return orderItems;
+        }
+        public bool MergeOrders(
+            int orderId1,
+            int orderId2,
+            out string message)
+        {
+            // 1. 取得兩張訂單
+            Order? order1 = GetOrderById(orderId1);
+            Order? order2 = GetOrderById(orderId2);
+
+            if (order1 == null || order2 == null)
+            {
+                message = "找不到其中一張訂單。";
+                return false;
+            }
+
+            // 2. 不能把同一張訂單跟自己合併
+            if (order1.Id == order2.Id)
+            {
+                message = "不能合併同一張訂單。";
+                return false;
+            }
+
+            // 3. 必須是同一位 Customer
+            if (order1.CustomerId != order2.CustomerId)
+            {
+                message = "不同客戶的訂單無法合併。";
+                return false;
+            }
+
+            // 4. Completed / Cancelled / Merged 都不能合併
+            if (order1.Status == OrderStatus.Completed ||
+                order1.Status == OrderStatus.Cancelled ||
+                order1.Status == OrderStatus.Merged ||
+                order2.Status == OrderStatus.Completed ||
+                order2.Status == OrderStatus.Cancelled ||
+                order2.Status == OrderStatus.Merged)
+            {
+                message = "已完成、已取消或已合併的訂單無法再次合併。";
+                return false;
+            }
+
+            // 5. 兩張訂單狀態必須相同
+            if (order1.Status != order2.Status)
+            {
+                message = "訂單狀態不同，無法合併。";
+                return false;
+            }
+
+            // 6. 日期較新的訂單保留
+            Order newOrder;
+            Order oldOrder;
+
+            if (order1.OrderDate >= order2.OrderDate)
+            {
+                newOrder = order1;
+                oldOrder = order2;
+            }
+            else
+            {
+                newOrder = order2;
+                oldOrder = order1;
+            }
+
+            // 7. 取得兩張訂單的商品
+            List<OrderItem> newItems =
+                GetOrderItemsByOrderId(newOrder.Id);
+
+            List<OrderItem> oldItems =
+                GetOrderItemsByOrderId(oldOrder.Id);
+
+            using MySqlConnection connection =
+                databaseConnection.CreateConnection();
+
+            connection.Open();
+
+            using MySqlTransaction transaction =
+                connection.BeginTransaction();
+
+            try
+            {
+                // 8. 把舊訂單的商品合併到新訂單
+                foreach (OrderItem oldItem in oldItems)
+                {
+                    OrderItem? existingItem =
+                        newItems.FirstOrDefault(
+                            item =>
+                                item.ProductId == oldItem.ProductId &&
+                                item.UnitPrice == oldItem.UnitPrice
+                        );
+
+                    if (existingItem != null)
+                    {
+                        string updateItemSql = """
+                    UPDATE OrderItems
+                    SET Quantity = Quantity + @Quantity
+                    WHERE OrderId = @NewOrderId
+                      AND ProductId = @ProductId
+                      AND UnitPrice = @UnitPrice;
+                    """;
+
+                        MySqlCommand updateItemCommand =
+                            new MySqlCommand(
+                                updateItemSql,
+                                connection,
+                                transaction);
+
+                        updateItemCommand.Parameters.AddWithValue(
+                            "@Quantity",
+                            oldItem.Quantity);
+
+                        updateItemCommand.Parameters.AddWithValue(
+                            "@NewOrderId",
+                            newOrder.Id);
+
+                        updateItemCommand.Parameters.AddWithValue(
+                            "@ProductId",
+                            oldItem.ProductId);
+
+                        updateItemCommand.Parameters.AddWithValue(
+                            "@UnitPrice",
+                            oldItem.UnitPrice);
+
+                        int affectedRows =
+                            updateItemCommand.ExecuteNonQuery();
+
+                        if (affectedRows == 0)
+                        {
+                            throw new InvalidOperationException(
+                                "合併商品數量失敗。");
+                        }
+                    }
+                    else
+                    {
+                        string insertItemSql = """
+                    INSERT INTO OrderItems
+                        (OrderId, ProductId, Quantity, UnitPrice)
+                    VALUES
+                        (@NewOrderId, @ProductId, @Quantity, @UnitPrice);
+                    """;
+
+                        MySqlCommand insertItemCommand =
+                            new MySqlCommand(
+                                insertItemSql,
+                                connection,
+                                transaction);
+
+                        insertItemCommand.Parameters.AddWithValue(
+                            "@NewOrderId",
+                            newOrder.Id);
+
+                        insertItemCommand.Parameters.AddWithValue(
+                            "@ProductId",
+                            oldItem.ProductId);
+
+                        insertItemCommand.Parameters.AddWithValue(
+                            "@Quantity",
+                            oldItem.Quantity);
+
+                        insertItemCommand.Parameters.AddWithValue(
+                            "@UnitPrice",
+                            oldItem.UnitPrice);
+
+                        int affectedRows =
+                            insertItemCommand.ExecuteNonQuery();
+
+                        if (affectedRows == 0)
+                        {
+                            throw new InvalidOperationException(
+                                "新增合併商品失敗。");
+                        }
+                    }
+                }
+
+                // 9. 新訂單總價 = 原本兩張訂單總價相加
+                decimal mergedTotalPrice =
+                    newOrder.TotalPrice + oldOrder.TotalPrice;
+
+                string updateNewOrderSql = """
+                                        UPDATE Orders
+                                        SET TotalPrice = @TotalPrice
+                                        WHERE Id = @NewOrderId;
+                                        """;
+
+                MySqlCommand updateNewOrderCommand =
+                    new MySqlCommand(
+                        updateNewOrderSql,
+                        connection,
+                        transaction);
+
+                updateNewOrderCommand.Parameters.AddWithValue(
+                    "@TotalPrice",
+                    mergedTotalPrice);
+
+                updateNewOrderCommand.Parameters.AddWithValue(
+                    "@NewOrderId",
+                    newOrder.Id);
+
+                int newOrderAffectedRows =
+                    updateNewOrderCommand.ExecuteNonQuery();
+
+                if (newOrderAffectedRows == 0)
+                {
+                    throw new InvalidOperationException(
+                        "更新合併訂單總金額失敗。");
+                }
+
+                // 10. 舊訂單標記成 Merged，並記錄被合併到哪張訂單
+                string updateOldOrderSql = """
+                                            UPDATE Orders
+                                            SET Status = @Status,
+                                                MergedIntoOrderId = @MergedIntoOrderId
+                                            WHERE Id = @OldOrderId;
+                                            """;
+
+                MySqlCommand updateOldOrderCommand =
+                    new MySqlCommand(
+                        updateOldOrderSql,
+                        connection,
+                        transaction);
+
+                updateOldOrderCommand.Parameters.AddWithValue(
+                    "@Status",
+                    (int)OrderStatus.Merged);
+
+                updateOldOrderCommand.Parameters.AddWithValue(
+                    "@MergedIntoOrderId",
+                    newOrder.Id);
+
+                updateOldOrderCommand.Parameters.AddWithValue(
+                    "@OldOrderId",
+                    oldOrder.Id);
+
+                int oldOrderAffectedRows =
+                    updateOldOrderCommand.ExecuteNonQuery();
+
+                if (oldOrderAffectedRows == 0)
+                {
+                    throw new InvalidOperationException(
+                        "更新舊訂單狀態失敗。");
+                }
+
+                transaction.Commit();
+
+                message =
+                    $"訂單合併成功。訂單 #{oldOrder.Id} 已合併至訂單 #{newOrder.Id}。";
+
+                return true;
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+
+                message = "訂單合併失敗。";
                 return false;
             }
         }
