@@ -10,21 +10,23 @@
 
         public OrderStatus Status;
 
-        public decimal TotalPrice;
+        public decimal SubTotal;
 
         public List<OrderItem> Items = new List<OrderItem>();
 
-        public decimal CalculateTotalPrice()
+        public decimal CalculateSubTotal()
         {
-            decimal total = 0;
+            decimal SubTotal = 0;
 
             foreach (OrderItem item in Items)
             {
-                total += item.Quantity * item.UnitPrice;
+                SubTotal += item.Quantity * item.UnitPrice;
             }
 
-            return total;
+            return SubTotal;
         }
+        public decimal ShippingFee;
+        public decimal TotalPrice;
         public int? MergedIntoOrderId;
     }
 }

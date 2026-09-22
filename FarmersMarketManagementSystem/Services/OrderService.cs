@@ -90,16 +90,12 @@ namespace FarmersMarketManagementSystem.Services
 
             try
             {
-                //計算訂單總價
-                order.TotalPrice = order.CalculateTotalPrice();
-
-
                 //新增 Orders
                 string orderSql = """
                                 INSERT INTO Orders
-                                    (CustomerId, OrderDate, TotalPrice, Status)
+                                    (CustomerId, OrderDate, SubTotal, ShippingFee, TotalPrice, Status)
                                 VALUES
-                                    (@CustomerId, @OrderDate, @TotalPrice, @Status);
+                                    (@CustomerId, @OrderDate, @SubTotal, @ShippingFee, @TotalPrice, @Status);
                                 """;
 
                 MySqlCommand orderCommand =
@@ -112,6 +108,14 @@ namespace FarmersMarketManagementSystem.Services
                 orderCommand.Parameters.AddWithValue(
                     "@OrderDate",
                     order.OrderDate);
+
+                orderCommand.Parameters.AddWithValue(
+                    "@SubTotal",
+                    order.SubTotal);
+
+                orderCommand.Parameters.AddWithValue(
+                    "@ShippingFee",
+                    order.ShippingFee);
 
                 orderCommand.Parameters.AddWithValue(
                     "@TotalPrice",
@@ -217,7 +221,7 @@ namespace FarmersMarketManagementSystem.Services
             connection.Open();
 
             string sql = """
-                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status, MergedIntoOrderId
+                        SELECT Id, CustomerId, OrderDate, SubTotal, ShippingFee, TotalPrice, Status, MergedIntoOrderId
                         FROM Orders
                         WHERE Id = @Id;
                         """;
@@ -237,6 +241,8 @@ namespace FarmersMarketManagementSystem.Services
                 order.Id = reader.GetInt32("Id");
                 order.CustomerId = reader.GetInt32("CustomerId");
                 order.OrderDate = reader.GetDateTime("OrderDate");
+                order.SubTotal = reader.GetDecimal("SubTotal");
+                order.ShippingFee = reader.GetDecimal("ShippingFee");
                 order.TotalPrice = reader.GetDecimal("TotalPrice");
                 order.Status = (OrderStatus)reader.GetInt32("Status");
                 if (!reader.IsDBNull(reader.GetOrdinal("MergedIntoOrderId")))
@@ -272,6 +278,8 @@ namespace FarmersMarketManagementSystem.Services
                             oi.Quantity,
                             oi.UnitPrice,
                             o.Status,
+                            o.SubTotal,
+                            o.ShippingFee,
                             o.MergedIntoOrderId
                         FROM Orders o
                         JOIN Customers c
@@ -300,10 +308,10 @@ namespace FarmersMarketManagementSystem.Services
                     detail = new OrderDetail();
 
                     detail.OrderId = reader.GetInt32("OrderId");
-                    detail.CustomerName =
-                        $"{reader.GetString("FirstName")} {reader.GetString("LastName")}";
-
+                    detail.CustomerName =$"{reader.GetString("FirstName")} {reader.GetString("LastName")}";
                     detail.OrderDate = reader.GetDateTime("OrderDate");
+                    detail.SubTotal = reader.GetDecimal("SubTotal");
+                    detail.ShippingFee = reader.GetDecimal("ShippingFee");
                     detail.TotalPrice = reader.GetDecimal("TotalPrice");
                     detail.Status = (OrderStatus)reader.GetInt32("Status");
                     detail.MergedIntoOrderId = reader.IsDBNull(reader.GetOrdinal("MergedIntoOrderId")) 
@@ -330,7 +338,7 @@ namespace FarmersMarketManagementSystem.Services
             connection.Open();
 
             string sql = """
-                        SELECT Id, CustomerId, OrderDate, TotalPrice, Status, MergedIntoOrderId
+                        SELECT Id, CustomerId, OrderDate, SubTotal, ShippingFee, TotalPrice, Status, MergedIntoOrderId
                         FROM Orders
                         WHERE CustomerId = @CustomerId
                         ORDER BY OrderDate DESC;
@@ -353,6 +361,8 @@ namespace FarmersMarketManagementSystem.Services
                 order.Id = reader.GetInt32("Id");
                 order.CustomerId = reader.GetInt32("CustomerId");
                 order.OrderDate = reader.GetDateTime("OrderDate");
+                order.SubTotal = reader.GetDecimal("SubTotal");
+                order.ShippingFee = reader.GetDecimal("ShippingFee");
                 order.TotalPrice = reader.GetDecimal("TotalPrice");
                 order.Status = (OrderStatus)reader.GetInt32("Status");
                 order.MergedIntoOrderId = reader.IsDBNull(reader.GetOrdinal("MergedIntoOrderId"))
@@ -795,12 +805,16 @@ namespace FarmersMarketManagementSystem.Services
                 }
 
                 // 9. 新訂單總價 = 原本兩張訂單總價相加
-                decimal mergedTotalPrice =
-                    newOrder.TotalPrice + oldOrder.TotalPrice;
+                decimal mergedSubPrice = newOrder.SubTotal + oldOrder.SubTotal;
+
+                decimal mergedShippingFee = CalculateShippingFee(mergedSubPrice);
+                decimal mergedTotalPrice = mergedSubPrice + mergedShippingFee;
 
                 string updateNewOrderSql = """
                                         UPDATE Orders
-                                        SET TotalPrice = @TotalPrice
+                                        SET SubTotal = @SubTotal,
+                                            ShippingFee = @ShippingFee,
+                                            TotalPrice = @TotalPrice
                                         WHERE Id = @NewOrderId;
                                         """;
 
@@ -809,6 +823,14 @@ namespace FarmersMarketManagementSystem.Services
                         updateNewOrderSql,
                         connection,
                         transaction);
+
+                updateNewOrderCommand.Parameters.AddWithValue(
+                    "@SubTotal",
+                    mergedSubPrice);
+
+                updateNewOrderCommand.Parameters.AddWithValue(
+                    "@ShippingFee",
+                    mergedShippingFee);
 
                 updateNewOrderCommand.Parameters.AddWithValue(
                     "@TotalPrice",
@@ -876,6 +898,15 @@ namespace FarmersMarketManagementSystem.Services
                 message = "訂單合併失敗。";
                 return false;
             }
+        }
+        public decimal CalculateShippingFee(decimal orderSubTotal)
+        {
+            decimal shippingFee = 0;
+            if (orderSubTotal < 1000)
+            {
+                shippingFee = 100;
+            }
+            return shippingFee;
         }
     }
 }

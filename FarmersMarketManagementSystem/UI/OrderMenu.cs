@@ -199,9 +199,12 @@ namespace FarmersMarketManagementSystem.UI
 
             ShowCurrentOrder(order);
 
-            order.TotalPrice = order.CalculateTotalPrice();
+            order.SubTotal = order.CalculateSubTotal();
+            order.ShippingFee = orderService.CalculateShippingFee(order.SubTotal);
+            order.TotalPrice = order.SubTotal + order.ShippingFee;
 
-            Console.WriteLine($"訂單總金額：{order.TotalPrice}");
+            Console.WriteLine($"運費：{order.ShippingFee:C}");
+            Console.WriteLine($"訂單總金額：{order.TotalPrice:C}");
 
             Console.Write("確定建立訂單嗎？(Y/N)：");
             string? createConfirm = Console.ReadLine();
@@ -265,6 +268,7 @@ namespace FarmersMarketManagementSystem.UI
 
             Console.WriteLine();
             Console.WriteLine(
+                $"運費：{detail.ShippingFee:C} | " +
                 $"總金額：{detail.TotalPrice:C}"
             );
         }
@@ -303,6 +307,9 @@ namespace FarmersMarketManagementSystem.UI
                 Console.WriteLine(
                     $"訂單 ID：{order.Id} | " +
                     $"訂單日期：{order.OrderDate} | " +
+                    $"訂單狀態：{order.Status} | " +
+                    $"小計：{order.SubTotal:C} | " +
+                    $"運費：{order.ShippingFee:C} | " +
                     $"總金額：{order.TotalPrice:C}"
                 );
             }

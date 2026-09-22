@@ -9,6 +9,8 @@
         public DateTime OrderDate;
 
         public decimal TotalPrice;
+        public decimal SubTotal;
+        public decimal ShippingFee;
 
         public List<OrderDetailItem> Items = new List<OrderDetailItem>();
 

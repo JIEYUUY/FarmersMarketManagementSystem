@@ -16,5 +16,6 @@ namespace FarmersMarketManagementSystem.Services
         bool UpdateOrderStatus(int orderId,OrderStatus newStatus,out string message);
         bool CancelOrder(int orderId,out string message);
         bool MergeOrders(int orderId1, int orderId2, out string message);
+        decimal CalculateShippingFee(decimal orderSubTotal);
     }
 }
